@@ -1,0 +1,1290 @@
+{
+ "monthly": [
+  {
+   "month": "2026-06",
+   "contacts": 26361,
+   "complaints": 13,
+   "complaintsPer1000": 0.49,
+   "postPaymentContacts": 0,
+   "frequencyCapBreaches": 1,
+   "quietHoursBreaches": 2,
+   "quietHoursAdherence": 1,
+   "frequencyCapAdherence": 1
+  },
+  {
+   "month": "2026-07",
+   "contacts": 86782,
+   "complaints": 44,
+   "complaintsPer1000": 0.51,
+   "postPaymentContacts": 0,
+   "frequencyCapBreaches": 4,
+   "quietHoursBreaches": 1,
+   "quietHoursAdherence": 1,
+   "frequencyCapAdherence": 1
+  },
+  {
+   "month": "2026-08",
+   "contacts": 107579,
+   "complaints": 44,
+   "complaintsPer1000": 0.41,
+   "postPaymentContacts": 0,
+   "frequencyCapBreaches": 5,
+   "quietHoursBreaches": 1,
+   "quietHoursAdherence": 1,
+   "frequencyCapAdherence": 1
+  },
+  {
+   "month": "2026-09",
+   "contacts": 66409,
+   "complaints": 23,
+   "complaintsPer1000": 0.35,
+   "postPaymentContacts": 0,
+   "frequencyCapBreaches": 1,
+   "quietHoursBreaches": 2,
+   "quietHoursAdherence": 1,
+   "frequencyCapAdherence": 1
+  }
+ ],
+ "complaints": [
+  {
+   "id": "CMP-2086",
+   "date": "2026-09-14",
+   "customerId": "ACC-100464",
+   "area": "Kuantan",
+   "channel": "Email",
+   "category": "Timing Concern (Due Date Elapsed)",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2076",
+   "date": "2026-09-14",
+   "customerId": "ACC-100436",
+   "area": "Kuantan",
+   "channel": "Print",
+   "category": "Timing Concern (Due Date Elapsed)",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2071",
+   "date": "2026-09-14",
+   "customerId": "ACC-100237",
+   "area": "Ipoh",
+   "channel": "WhatsApp/EWP",
+   "category": "Timing Concern (Bank Transit Lag)",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2069",
+   "date": "2026-09-14",
+   "customerId": "ACC-100229",
+   "area": "Klang",
+   "channel": "WhatsApp/EWP",
+   "category": "Timing Concern (Due Date Elapsed)",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2000",
+   "date": "2026-09-14",
+   "customerId": "ACC-100120",
+   "area": "Melaka",
+   "channel": "WhatsApp/EWP",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2101",
+   "date": "2026-09-13",
+   "customerId": "ACC-100460",
+   "area": "Kuching",
+   "channel": "Print",
+   "category": "Timing Concern (Delayed Bill Delivery)",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2015",
+   "date": "2026-09-13",
+   "customerId": "ACC-100695",
+   "area": "Petaling Jaya",
+   "channel": "SMS/IVR",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2073",
+   "date": "2026-09-12",
+   "customerId": "ACC-100182",
+   "area": "Petaling Jaya",
+   "channel": "WhatsApp/EWP",
+   "category": "Data Accuracy",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2097",
+   "date": "2026-09-11",
+   "customerId": "ACC-100555",
+   "area": "Georgetown",
+   "channel": "WhatsApp/EWP",
+   "category": "Data Accuracy",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2008",
+   "date": "2026-09-11",
+   "customerId": "ACC-100611",
+   "area": "Kuala Lumpur",
+   "channel": "Email",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2117",
+   "date": "2026-09-10",
+   "customerId": "ACC-100117",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Tone/Conduct",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2042",
+   "date": "2026-09-10",
+   "customerId": "ACC-100342",
+   "area": "Klang",
+   "channel": "Print",
+   "category": "Quiet Hours",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2019",
+   "date": "2026-09-09",
+   "customerId": "ACC-100786",
+   "area": "Shah Alam",
+   "channel": "WhatsApp/EWP",
+   "category": "Quiet Hours",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2122",
+   "date": "2026-09-04",
+   "customerId": "ACC-100224",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2036",
+   "date": "2026-09-04",
+   "customerId": "ACC-100491",
+   "area": "Shah Alam",
+   "channel": "Email",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2106",
+   "date": "2026-09-02",
+   "customerId": "ACC-100231",
+   "area": "Kuala Lumpur",
+   "channel": "WhatsApp/EWP",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2099",
+   "date": "2026-09-01",
+   "customerId": "ACC-100230",
+   "area": "Johor Bahru",
+   "channel": "Email",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2116",
+   "date": "2026-08-31",
+   "customerId": "ACC-100289",
+   "area": "Johor Bahru",
+   "channel": "Print",
+   "category": "Disputed Amount",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2072",
+   "date": "2026-08-30",
+   "customerId": "ACC-100772",
+   "area": "Kuala Lumpur",
+   "channel": "WhatsApp/EWP",
+   "category": "Tone/Conduct",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2018",
+   "date": "2026-08-30",
+   "customerId": "ACC-100773",
+   "area": "Georgetown",
+   "channel": "Print",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2089",
+   "date": "2026-08-28",
+   "customerId": "ACC-100264",
+   "area": "Klang",
+   "channel": "WhatsApp/EWP",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2063",
+   "date": "2026-08-27",
+   "customerId": "ACC-100275",
+   "area": "Shah Alam",
+   "channel": "Email",
+   "category": "Data Accuracy",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2114",
+   "date": "2026-08-25",
+   "customerId": "ACC-100118",
+   "area": "Ipoh",
+   "channel": "Email",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2107",
+   "date": "2026-08-25",
+   "customerId": "ACC-100711",
+   "area": "Petaling Jaya",
+   "channel": "WhatsApp/EWP",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2033",
+   "date": "2026-08-25",
+   "customerId": "ACC-100290",
+   "area": "Georgetown",
+   "channel": "Email",
+   "category": "Data Accuracy",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2096",
+   "date": "2026-08-24",
+   "customerId": "ACC-100252",
+   "area": "Kuala Lumpur",
+   "channel": "Email",
+   "category": "Data Accuracy",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2088",
+   "date": "2026-08-24",
+   "customerId": "ACC-100739",
+   "area": "Kuantan",
+   "channel": "WhatsApp/EWP",
+   "category": "Tone/Conduct",
+   "status": "Escalated",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2118",
+   "date": "2026-08-23",
+   "customerId": "ACC-100392",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2083",
+   "date": "2026-08-23",
+   "customerId": "ACC-100876",
+   "area": "Kuala Lumpur",
+   "channel": "WhatsApp/EWP",
+   "category": "Wrong Person",
+   "status": "Escalated",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2004",
+   "date": "2026-08-22",
+   "customerId": "ACC-100240",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2066",
+   "date": "2026-08-21",
+   "customerId": "ACC-100236",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Data Accuracy",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2057",
+   "date": "2026-08-21",
+   "customerId": "ACC-100076",
+   "area": "Melaka",
+   "channel": "Email",
+   "category": "Quiet Hours",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2061",
+   "date": "2026-08-20",
+   "customerId": "ACC-100794",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2087",
+   "date": "2026-08-19",
+   "customerId": "ACC-100427",
+   "area": "Shah Alam",
+   "channel": "SMS/IVR",
+   "category": "Frequency",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2037",
+   "date": "2026-08-19",
+   "customerId": "ACC-100112",
+   "area": "Johor Bahru",
+   "channel": "SMS/IVR",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2020",
+   "date": "2026-08-19",
+   "customerId": "ACC-100311",
+   "area": "Johor Bahru",
+   "channel": "Email",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2098",
+   "date": "2026-08-18",
+   "customerId": "ACC-100654",
+   "area": "Shah Alam",
+   "channel": "WhatsApp/EWP",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2111",
+   "date": "2026-08-17",
+   "customerId": "ACC-100263",
+   "area": "Petaling Jaya",
+   "channel": "WhatsApp/EWP",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2112",
+   "date": "2026-08-14",
+   "customerId": "ACC-100707",
+   "area": "Kuala Lumpur",
+   "channel": "SMS/IVR",
+   "category": "Quiet Hours",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2070",
+   "date": "2026-08-13",
+   "customerId": "ACC-100025",
+   "area": "Ipoh",
+   "channel": "SMS/IVR",
+   "category": "Disputed Amount",
+   "status": "In Review",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2011",
+   "date": "2026-08-13",
+   "customerId": "ACC-100618",
+   "area": "Shah Alam",
+   "channel": "SMS/IVR",
+   "category": "Frequency",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2010",
+   "date": "2026-08-13",
+   "customerId": "ACC-100100",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Data Accuracy",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2041",
+   "date": "2026-08-12",
+   "customerId": "ACC-100094",
+   "area": "Alor Setar",
+   "channel": "WhatsApp/EWP",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2079",
+   "date": "2026-08-11",
+   "customerId": "ACC-100493",
+   "area": "Georgetown",
+   "channel": "Email",
+   "category": "Data Accuracy",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2043",
+   "date": "2026-08-11",
+   "customerId": "ACC-100806",
+   "area": "Kuantan",
+   "channel": "Print",
+   "category": "Disputed Amount",
+   "status": "In Review",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2026",
+   "date": "2026-08-11",
+   "customerId": "ACC-100602",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Data Accuracy",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2003",
+   "date": "2026-08-11",
+   "customerId": "ACC-100100",
+   "area": "Kuala Lumpur",
+   "channel": "WhatsApp/EWP",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2115",
+   "date": "2026-08-09",
+   "customerId": "ACC-100783",
+   "area": "Shah Alam",
+   "channel": "Email",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2080",
+   "date": "2026-08-09",
+   "customerId": "ACC-100001",
+   "area": "Georgetown",
+   "channel": "Email",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2031",
+   "date": "2026-08-08",
+   "customerId": "ACC-100369",
+   "area": "Ipoh",
+   "channel": "Email",
+   "category": "Data Accuracy",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2056",
+   "date": "2026-08-06",
+   "customerId": "ACC-100157",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2123",
+   "date": "2026-08-05",
+   "customerId": "ACC-100596",
+   "area": "Kuantan",
+   "channel": "Email",
+   "category": "Frequency",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2095",
+   "date": "2026-08-05",
+   "customerId": "ACC-100761",
+   "area": "Kota Kinabalu",
+   "channel": "WhatsApp/EWP",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2064",
+   "date": "2026-08-05",
+   "customerId": "ACC-100568",
+   "area": "Kuala Lumpur",
+   "channel": "Email",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2046",
+   "date": "2026-08-05",
+   "customerId": "ACC-100890",
+   "area": "Georgetown",
+   "channel": "Print",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2091",
+   "date": "2026-08-04",
+   "customerId": "ACC-100889",
+   "area": "Georgetown",
+   "channel": "WhatsApp/EWP",
+   "category": "Disputed Amount",
+   "status": "In Review",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2002",
+   "date": "2026-08-04",
+   "customerId": "ACC-100364",
+   "area": "Shah Alam",
+   "channel": "Print",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2110",
+   "date": "2026-08-02",
+   "customerId": "ACC-100627",
+   "area": "Kuala Lumpur",
+   "channel": "WhatsApp/EWP",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2040",
+   "date": "2026-08-02",
+   "customerId": "ACC-100322",
+   "area": "Melaka",
+   "channel": "Print",
+   "category": "Data Accuracy",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2055",
+   "date": "2026-08-01",
+   "customerId": "ACC-100532",
+   "area": "Petaling Jaya",
+   "channel": "SMS/IVR",
+   "category": "Disputed Amount",
+   "status": "In Review",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2051",
+   "date": "2026-08-01",
+   "customerId": "ACC-100121",
+   "area": "Kuching",
+   "channel": "Email",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2001",
+   "date": "2026-07-31",
+   "customerId": "ACC-100795",
+   "area": "Melaka",
+   "channel": "SMS/IVR",
+   "category": "Frequency",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2024",
+   "date": "2026-07-28",
+   "customerId": "ACC-100877",
+   "area": "Alor Setar",
+   "channel": "Email",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2017",
+   "date": "2026-07-28",
+   "customerId": "ACC-100543",
+   "area": "Shah Alam",
+   "channel": "WhatsApp/EWP",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2109",
+   "date": "2026-07-27",
+   "customerId": "ACC-100317",
+   "area": "Kuala Lumpur",
+   "channel": "WhatsApp/EWP",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2077",
+   "date": "2026-07-27",
+   "customerId": "ACC-100724",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2049",
+   "date": "2026-07-27",
+   "customerId": "ACC-100481",
+   "area": "Kuantan",
+   "channel": "WhatsApp/EWP",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2035",
+   "date": "2026-07-27",
+   "customerId": "ACC-100495",
+   "area": "Petaling Jaya",
+   "channel": "Email",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2093",
+   "date": "2026-07-26",
+   "customerId": "ACC-100828",
+   "area": "Kuantan",
+   "channel": "Email",
+   "category": "Tone/Conduct",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2082",
+   "date": "2026-07-25",
+   "customerId": "ACC-100713",
+   "area": "Petaling Jaya",
+   "channel": "Print",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2027",
+   "date": "2026-07-25",
+   "customerId": "ACC-100769",
+   "area": "Shah Alam",
+   "channel": "SMS/IVR",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2022",
+   "date": "2026-07-25",
+   "customerId": "ACC-100624",
+   "area": "Seremban",
+   "channel": "SMS/IVR",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2005",
+   "date": "2026-07-25",
+   "customerId": "ACC-100424",
+   "area": "Georgetown",
+   "channel": "Print",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2119",
+   "date": "2026-07-24",
+   "customerId": "ACC-100608",
+   "area": "Shah Alam",
+   "channel": "Print",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2092",
+   "date": "2026-07-23",
+   "customerId": "ACC-100408",
+   "area": "Petaling Jaya",
+   "channel": "Print",
+   "category": "Tone/Conduct",
+   "status": "In Review",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2108",
+   "date": "2026-07-22",
+   "customerId": "ACC-100183",
+   "area": "Kuching",
+   "channel": "Print",
+   "category": "Wrong Person",
+   "status": "Escalated",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2038",
+   "date": "2026-07-22",
+   "customerId": "ACC-100710",
+   "area": "Shah Alam",
+   "channel": "WhatsApp/EWP",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2030",
+   "date": "2026-07-22",
+   "customerId": "ACC-100364",
+   "area": "Shah Alam",
+   "channel": "Print",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2025",
+   "date": "2026-07-22",
+   "customerId": "ACC-100482",
+   "area": "Johor Bahru",
+   "channel": "WhatsApp/EWP",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2060",
+   "date": "2026-07-21",
+   "customerId": "ACC-100643",
+   "area": "Seremban",
+   "channel": "WhatsApp/EWP",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2121",
+   "date": "2026-07-18",
+   "customerId": "ACC-100804",
+   "area": "Johor Bahru",
+   "channel": "Email",
+   "category": "Quiet Hours",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2052",
+   "date": "2026-07-18",
+   "customerId": "ACC-100197",
+   "area": "Kuching",
+   "channel": "WhatsApp/EWP",
+   "category": "Tone/Conduct",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2021",
+   "date": "2026-07-18",
+   "customerId": "ACC-100077",
+   "area": "Kuantan",
+   "channel": "Email",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2012",
+   "date": "2026-07-18",
+   "customerId": "ACC-100323",
+   "area": "Petaling Jaya",
+   "channel": "Print",
+   "category": "Data Accuracy",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2007",
+   "date": "2026-07-16",
+   "customerId": "ACC-100431",
+   "area": "Klang",
+   "channel": "Email",
+   "category": "Wrong Person",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2034",
+   "date": "2026-07-15",
+   "customerId": "ACC-100682",
+   "area": "Klang",
+   "channel": "Email",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2016",
+   "date": "2026-07-14",
+   "customerId": "ACC-100599",
+   "area": "Ipoh",
+   "channel": "SMS/IVR",
+   "category": "Data Accuracy",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2078",
+   "date": "2026-07-13",
+   "customerId": "ACC-100839",
+   "area": "Shah Alam",
+   "channel": "WhatsApp/EWP",
+   "category": "Data Accuracy",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2028",
+   "date": "2026-07-13",
+   "customerId": "ACC-100582",
+   "area": "Kuala Lumpur",
+   "channel": "WhatsApp/EWP",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2081",
+   "date": "2026-07-11",
+   "customerId": "ACC-100331",
+   "area": "Petaling Jaya",
+   "channel": "SMS/IVR",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2062",
+   "date": "2026-07-10",
+   "customerId": "ACC-100644",
+   "area": "Shah Alam",
+   "channel": "Email",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2054",
+   "date": "2026-07-10",
+   "customerId": "ACC-100520",
+   "area": "Kuala Lumpur",
+   "channel": "SMS/IVR",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2013",
+   "date": "2026-07-10",
+   "customerId": "ACC-100542",
+   "area": "Seremban",
+   "channel": "Email",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2103",
+   "date": "2026-07-09",
+   "customerId": "ACC-100089",
+   "area": "Shah Alam",
+   "channel": "Email",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2065",
+   "date": "2026-07-08",
+   "customerId": "ACC-100053",
+   "area": "Shah Alam",
+   "channel": "Email",
+   "category": "Wrong Person",
+   "status": "In Review",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2104",
+   "date": "2026-07-07",
+   "customerId": "ACC-100719",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2044",
+   "date": "2026-07-07",
+   "customerId": "ACC-100075",
+   "area": "Johor Bahru",
+   "channel": "Email",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2085",
+   "date": "2026-07-05",
+   "customerId": "ACC-100653",
+   "area": "Klang",
+   "channel": "Email",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2090",
+   "date": "2026-07-03",
+   "customerId": "ACC-100085",
+   "area": "Petaling Jaya",
+   "channel": "WhatsApp/EWP",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2032",
+   "date": "2026-07-03",
+   "customerId": "ACC-100604",
+   "area": "Kuala Lumpur",
+   "channel": "WhatsApp/EWP",
+   "category": "Data Accuracy",
+   "status": "In Review",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2120",
+   "date": "2026-06-30",
+   "customerId": "ACC-100218",
+   "area": "Melaka",
+   "channel": "Print",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2105",
+   "date": "2026-06-30",
+   "customerId": "ACC-100619",
+   "area": "Klang",
+   "channel": "WhatsApp/EWP",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2023",
+   "date": "2026-06-30",
+   "customerId": "ACC-100247",
+   "area": "Seremban",
+   "channel": "Email",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2006",
+   "date": "2026-06-30",
+   "customerId": "ACC-100000",
+   "area": "Klang",
+   "channel": "Email",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2068",
+   "date": "2026-06-29",
+   "customerId": "ACC-100524",
+   "area": "Ipoh",
+   "channel": "WhatsApp/EWP",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2067",
+   "date": "2026-06-29",
+   "customerId": "ACC-100611",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Disputed Amount",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2014",
+   "date": "2026-06-28",
+   "customerId": "ACC-100693",
+   "area": "Johor Bahru",
+   "channel": "SMS/IVR",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2102",
+   "date": "2026-06-27",
+   "customerId": "ACC-100385",
+   "area": "Georgetown",
+   "channel": "WhatsApp/EWP",
+   "category": "Frequency",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2047",
+   "date": "2026-06-27",
+   "customerId": "ACC-100188",
+   "area": "Shah Alam",
+   "channel": "Email",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2094",
+   "date": "2026-06-25",
+   "customerId": "ACC-100484",
+   "area": "Shah Alam",
+   "channel": "WhatsApp/EWP",
+   "category": "Wrong Person",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2039",
+   "date": "2026-06-25",
+   "customerId": "ACC-100738",
+   "area": "Ipoh",
+   "channel": "WhatsApp/EWP",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2113",
+   "date": "2026-06-24",
+   "customerId": "ACC-100137",
+   "area": "Petaling Jaya",
+   "channel": "SMS/IVR",
+   "category": "Data Accuracy",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2048",
+   "date": "2026-06-24",
+   "customerId": "ACC-100664",
+   "area": "Shah Alam",
+   "channel": "Email",
+   "category": "Quiet Hours",
+   "status": "In Review",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2050",
+   "date": "2026-06-23",
+   "customerId": "ACC-100402",
+   "area": "Kuala Lumpur",
+   "channel": "Email",
+   "category": "Quiet Hours",
+   "status": "Escalated",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2045",
+   "date": "2026-06-23",
+   "customerId": "ACC-100011",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Quiet Hours",
+   "status": "Escalated",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2029",
+   "date": "2026-06-23",
+   "customerId": "ACC-100866",
+   "area": "Kuala Lumpur",
+   "channel": "Print",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2058",
+   "date": "2026-06-21",
+   "customerId": "ACC-100314",
+   "area": "Klang",
+   "channel": "Email",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2053",
+   "date": "2026-06-21",
+   "customerId": "ACC-100510",
+   "area": "Kuching",
+   "channel": "Print",
+   "category": "Tone/Conduct",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2100",
+   "date": "2026-06-20",
+   "customerId": "ACC-100246",
+   "area": "Georgetown",
+   "channel": "WhatsApp/EWP",
+   "category": "Data Accuracy",
+   "status": "Resolved",
+   "upheld": false
+  },
+  {
+   "id": "CMP-2084",
+   "date": "2026-06-19",
+   "customerId": "ACC-100438",
+   "area": "Klang",
+   "channel": "Print",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2059",
+   "date": "2026-06-19",
+   "customerId": "ACC-100353",
+   "area": "Johor Bahru",
+   "channel": "Print",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2075",
+   "date": "2026-06-18",
+   "customerId": "ACC-100835",
+   "area": "Klang",
+   "channel": "Email",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2074",
+   "date": "2026-06-18",
+   "customerId": "ACC-100801",
+   "area": "Kuantan",
+   "channel": "SMS/IVR",
+   "category": "Quiet Hours",
+   "status": "Resolved",
+   "upheld": true
+  },
+  {
+   "id": "CMP-2009",
+   "date": "2026-06-18",
+   "customerId": "ACC-100626",
+   "area": "Kota Kinabalu",
+   "channel": "SMS/IVR",
+   "category": "Disputed Amount",
+   "status": "Resolved",
+   "upheld": true
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "organisation": {
+  "name": "Indah Water Konsortium Sdn Bhd",
+  "shortName": "Indah Water",
+  "website": "https://www.iwk.com.my/",
+  "description": "Malaysia's national sewerage company.",
+  "currency": "MYR",
+  "currencySymbol": "RM",
+  "locale": "en-MY"
+ },
+ "contactPolicy": {
+  "quietHoursStart": "21:00",
+  "quietHoursEnd": "08:00",
+  "maxContactsPerWeek": 3,
+  "maxContactsPerDay": 1,
+  "postPaymentContactBlockHours": 48,
+  "suppressOnOpenDispute": true,
+  "suppressOnDeceasedEstate": true
+ },
+ "channelCosts": {
+  "WhatsApp/EWP": 0.08,
+  "SMS/IVR": 0.05,
+  "Email": 0.002,
+  "Print": 1.85,
+  "Voice AI": 0.14,
+  "DCA Placement": 18.5,
+  "Legal Demand Pack": 145
+ },
+ "ladder": {
+  "stages": [
+   "Bill Presented",
+   "Pre-Due",
+   "Early Arrears",
+   "Committed Arrears",
+   "Formal",
+   "Residual"
+  ],
+  "segments": [
+   "Friction Payers",
+   "Refusers",
+   "Constrained",
+   "Non-viable"
+  ],
+  "specialRouting": [
+   "Deceased Estate",
+   "Vacant Premise",
+   "Hardship/eKasih",
+   "Open Dispute"
+  ]
+ },
+ "targets": {
+  "contactabilityRate": 0.78,
+  "conversionRate": 0.22,
+  "promiseKeptRate": 0.7,
+  "complaintsPer1000": 0.4,
+  "postPaymentContacts": 0,
+  "costPerRinggitRecovered": 0.05
+ }
+}

@@ -1,0 +1,500 @@
+[
+ {
+  "period": "2026-04",
+  "stageCounts": {
+   "Bill Presented": 117,
+   "Pre-Due": 162,
+   "Early Arrears": 223,
+   "Committed Arrears": 177,
+   "Formal": 185,
+   "Residual": 126
+  },
+  "transitions": [
+   {
+    "from": "Bill Presented",
+    "to": "Pre-Due",
+    "direction": "forward",
+    "accounts": 33,
+    "value": 22997.68
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 46,
+    "value": 19976.05
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Early Arrears",
+    "direction": "forward",
+    "accounts": 92,
+    "value": 15187.56
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 124,
+    "value": 112295.73
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Committed Arrears",
+    "direction": "forward",
+    "accounts": 136,
+    "value": 45603.26
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 110,
+    "value": 37238.71
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Formal",
+    "direction": "forward",
+    "accounts": 108,
+    "value": 94589.6
+   },
+   {
+    "from": "Formal",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 138,
+    "value": 76414.64
+   },
+   {
+    "from": "Formal",
+    "to": "Residual",
+    "direction": "forward",
+    "accounts": 124,
+    "value": 82168.46
+   },
+   {
+    "from": "Residual",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 80,
+    "value": 61049.04
+   }
+  ]
+ },
+ {
+  "period": "2026-05",
+  "stageCounts": {
+   "Bill Presented": 154,
+   "Pre-Due": 127,
+   "Early Arrears": 204,
+   "Committed Arrears": 200,
+   "Formal": 152,
+   "Residual": 73
+  },
+  "transitions": [
+   {
+    "from": "Bill Presented",
+    "to": "Pre-Due",
+    "direction": "forward",
+    "accounts": 96,
+    "value": 30610.23
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 27,
+    "value": 4077.14
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Early Arrears",
+    "direction": "forward",
+    "accounts": 46,
+    "value": 15006.77
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 36,
+    "value": 37441.04
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Committed Arrears",
+    "direction": "forward",
+    "accounts": 164,
+    "value": 51442.36
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 111,
+    "value": 32885.5
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Formal",
+    "direction": "forward",
+    "accounts": 163,
+    "value": 111273.62
+   },
+   {
+    "from": "Formal",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 62,
+    "value": 9380.52
+   },
+   {
+    "from": "Formal",
+    "to": "Residual",
+    "direction": "forward",
+    "accounts": 73,
+    "value": 24406.4
+   },
+   {
+    "from": "Residual",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 108,
+    "value": 103146.37
+   }
+  ]
+ },
+ {
+  "period": "2026-06",
+  "stageCounts": {
+   "Bill Presented": 95,
+   "Pre-Due": 149,
+   "Early Arrears": 252,
+   "Committed Arrears": 179,
+   "Formal": 179,
+   "Residual": 103
+  },
+  "transitions": [
+   {
+    "from": "Bill Presented",
+    "to": "Pre-Due",
+    "direction": "forward",
+    "accounts": 32,
+    "value": 28123.22
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 73,
+    "value": 65817.67
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Early Arrears",
+    "direction": "forward",
+    "accounts": 58,
+    "value": 31540.61
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 127,
+    "value": 30167.21
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Committed Arrears",
+    "direction": "forward",
+    "accounts": 95,
+    "value": 60824.67
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 116,
+    "value": 74089.84
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Formal",
+    "direction": "forward",
+    "accounts": 123,
+    "value": 51163.54
+   },
+   {
+    "from": "Formal",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 31,
+    "value": 20597.12
+   },
+   {
+    "from": "Formal",
+    "to": "Residual",
+    "direction": "forward",
+    "accounts": 126,
+    "value": 81959.32
+   },
+   {
+    "from": "Residual",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 38,
+    "value": 7621.42
+   }
+  ]
+ },
+ {
+  "period": "2026-07",
+  "stageCounts": {
+   "Bill Presented": 140,
+   "Pre-Due": 98,
+   "Early Arrears": 247,
+   "Committed Arrears": 181,
+   "Formal": 172,
+   "Residual": 118
+  },
+  "transitions": [
+   {
+    "from": "Bill Presented",
+    "to": "Pre-Due",
+    "direction": "forward",
+    "accounts": 87,
+    "value": 17000.11
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 72,
+    "value": 37326.87
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Early Arrears",
+    "direction": "forward",
+    "accounts": 101,
+    "value": 59011.92
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 78,
+    "value": 77069.73
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Committed Arrears",
+    "direction": "forward",
+    "accounts": 106,
+    "value": 67210.79
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 52,
+    "value": 14420.08
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Formal",
+    "direction": "forward",
+    "accounts": 85,
+    "value": 48960.81
+   },
+   {
+    "from": "Formal",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 23,
+    "value": 3439.85
+   },
+   {
+    "from": "Formal",
+    "to": "Residual",
+    "direction": "forward",
+    "accounts": 138,
+    "value": 65756.36
+   },
+   {
+    "from": "Residual",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 31,
+    "value": 4621.39
+   }
+  ]
+ },
+ {
+  "period": "2026-08",
+  "stageCounts": {
+   "Bill Presented": 83,
+   "Pre-Due": 137,
+   "Early Arrears": 231,
+   "Committed Arrears": 171,
+   "Formal": 138,
+   "Residual": 128
+  },
+  "transitions": [
+   {
+    "from": "Bill Presented",
+    "to": "Pre-Due",
+    "direction": "forward",
+    "accounts": 47,
+    "value": 28618.24
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 119,
+    "value": 37337.01
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Early Arrears",
+    "direction": "forward",
+    "accounts": 183,
+    "value": 50106.28
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 65,
+    "value": 36736.66
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Committed Arrears",
+    "direction": "forward",
+    "accounts": 114,
+    "value": 86311.48
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 61,
+    "value": 59152.51
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Formal",
+    "direction": "forward",
+    "accounts": 104,
+    "value": 34502.28
+   },
+   {
+    "from": "Formal",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 81,
+    "value": 30937.3
+   },
+   {
+    "from": "Formal",
+    "to": "Residual",
+    "direction": "forward",
+    "accounts": 82,
+    "value": 49973.45
+   },
+   {
+    "from": "Residual",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 51,
+    "value": 53400.65
+   }
+  ]
+ },
+ {
+  "period": "2026-09",
+  "stageCounts": {
+   "Bill Presented": 150,
+   "Pre-Due": 108,
+   "Early Arrears": 181,
+   "Committed Arrears": 176,
+   "Formal": 156,
+   "Residual": 110
+  },
+  "transitions": [
+   {
+    "from": "Bill Presented",
+    "to": "Pre-Due",
+    "direction": "forward",
+    "accounts": 141,
+    "value": 126739.84
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 37,
+    "value": 18557.14
+   },
+   {
+    "from": "Pre-Due",
+    "to": "Early Arrears",
+    "direction": "forward",
+    "accounts": 96,
+    "value": 20551.96
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 56,
+    "value": 9702.83
+   },
+   {
+    "from": "Early Arrears",
+    "to": "Committed Arrears",
+    "direction": "forward",
+    "accounts": 159,
+    "value": 130000.25
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 51,
+    "value": 9809.92
+   },
+   {
+    "from": "Committed Arrears",
+    "to": "Formal",
+    "direction": "forward",
+    "accounts": 74,
+    "value": 24435.86
+   },
+   {
+    "from": "Formal",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 102,
+    "value": 70547.1
+   },
+   {
+    "from": "Formal",
+    "to": "Residual",
+    "direction": "forward",
+    "accounts": 152,
+    "value": 78373.96
+   },
+   {
+    "from": "Residual",
+    "to": "Resolved/Paid",
+    "direction": "resolved",
+    "accounts": 99,
+    "value": 15186.04
+   }
+  ]
+ }
+]

@@ -1,0 +1,45 @@
+# ---- dependencies ----
+node_modules/
+.pnp
+.pnp.js
+
+# ---- build output ----
+dist/
+dist-ssr/
+*.local
+
+# Netlify builds from source, so its local state is not committed.
+.netlify/
+
+# ---- logs ----
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- environment ----
+# NOTE: config.js and DB/ are intentionally NOT ignored — they are part of
+# this private repo. Only real .env files are excluded.
+.env
+.env.*
+!.env.example
+
+# ---- editors & OS ----
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ---- local tooling ----
+# Claude Code's cached permission grants; machine-specific, and this file
+# embeds API keys inside the allowed command strings.
+.claude/
+
+# ---- report tooling ----
+# Local-only: converts report.html -> report.docx. Not part of the app.
+report-tools/

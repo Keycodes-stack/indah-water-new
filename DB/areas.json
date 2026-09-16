@@ -1,0 +1,134 @@
+[
+  {
+    "area": "Selangor",
+    "state": "Selangor",
+    "type": "State",
+    "capital": "Shah Alam",
+    "region": "central",
+    "treatmentCoverage": 0.89,
+    "sewerageConnections": 359561,
+    "treatmentPlants": 61,
+    "igisZoneId": "ZN-SEL-01"
+  },
+  {
+    "area": "W.P. Kuala Lumpur",
+    "state": "W.P. Kuala Lumpur",
+    "type": "Federal Territory",
+    "capital": "Kuala Lumpur",
+    "region": "central",
+    "treatmentCoverage": 0.92,
+    "sewerageConnections": 182339,
+    "treatmentPlants": 34,
+    "igisZoneId": "ZN-WPKL-01"
+  },
+  {
+    "area": "Johor",
+    "state": "Johor",
+    "type": "State",
+    "capital": "Johor Bahru",
+    "region": "southern",
+    "treatmentCoverage": 0.81,
+    "sewerageConnections": 111613,
+    "treatmentPlants": 32,
+    "igisZoneId": "ZN-JHR-01"
+  },
+  {
+    "area": "Pulau Pinang",
+    "state": "Pulau Pinang",
+    "type": "State",
+    "capital": "Georgetown",
+    "region": "northern",
+    "treatmentCoverage": 0.86,
+    "sewerageConnections": 138286,
+    "treatmentPlants": 39,
+    "igisZoneId": "ZN-PNG-01"
+  },
+  {
+    "area": "Perak",
+    "state": "Perak",
+    "type": "State",
+    "capital": "Ipoh",
+    "region": "northern",
+    "treatmentCoverage": 0.77,
+    "sewerageConnections": 92394,
+    "treatmentPlants": 28,
+    "igisZoneId": "ZN-PRK-01"
+  },
+  {
+    "area": "Terengganu",
+    "state": "Terengganu",
+    "type": "State",
+    "capital": "Kuala Terengganu",
+    "region": "eastcoast",
+    "treatmentCoverage": 0.68,
+    "sewerageConnections": 34003,
+    "treatmentPlants": 16,
+    "igisZoneId": "ZN-TRG-01"
+  },
+  {
+    "area": "Negeri Sembilan",
+    "state": "Negeri Sembilan",
+    "type": "State",
+    "capital": "Seremban",
+    "region": "southern",
+    "treatmentCoverage": 0.75,
+    "sewerageConnections": 89895,
+    "treatmentPlants": 32,
+    "igisZoneId": "ZN-NSN-01"
+  },
+  {
+    "area": "Melaka",
+    "state": "Melaka",
+    "type": "State",
+    "capital": "Bandar Melaka",
+    "region": "southern",
+    "treatmentCoverage": 0.78,
+    "sewerageConnections": 90519,
+    "treatmentPlants": 21,
+    "igisZoneId": "ZN-MLK-01"
+  },
+  {
+    "area": "Pahang",
+    "state": "Pahang",
+    "type": "State",
+    "capital": "Kuantan",
+    "region": "eastcoast",
+    "treatmentCoverage": 0.7,
+    "sewerageConnections": 45629,
+    "treatmentPlants": 14,
+    "igisZoneId": "ZN-PHG-01"
+  },
+  {
+    "area": "Kelantan",
+    "state": "Kelantan",
+    "type": "State",
+    "capital": "Kota Bharu",
+    "region": "eastcoast",
+    "treatmentCoverage": 0.65,
+    "sewerageConnections": 36812,
+    "treatmentPlants": 12,
+    "igisZoneId": "ZN-KTN-01"
+  },
+  {
+    "area": "Kedah",
+    "state": "Kedah",
+    "type": "State",
+    "capital": "Alor Setar",
+    "region": "northern",
+    "treatmentCoverage": 0.72,
+    "sewerageConnections": 54944,
+    "treatmentPlants": 25,
+    "igisZoneId": "ZN-KDH-01"
+  },
+  {
+    "area": "Perlis",
+    "state": "Perlis",
+    "type": "State",
+    "capital": "Kangar",
+    "region": "northern",
+    "treatmentCoverage": 0.71,
+    "sewerageConnections": 18450,
+    "treatmentPlants": 8,
+    "igisZoneId": "ZN-PLS-01"
+  }
+]

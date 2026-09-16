@@ -1,0 +1,159 @@
+[
+ {
+  "id": "SEQ-011",
+  "name": "Pre-Due Courtesy Reminder",
+  "version": "v4",
+  "targetSegment": "Friction Payers",
+  "channelMix": [
+   "WhatsApp/EWP",
+   "SMS/IVR"
+  ],
+  "startedAt": "2026-07-06",
+  "accountsTreated": 2098,
+  "resolved": 1154,
+  "resolutionRate": 0.55,
+  "cost": 490.17,
+  "costPerResolution": 0.42,
+  "valueResolved": 1504425.82,
+  "costPerRinggitRecovered": 0.00033
+ },
+ {
+  "id": "SEQ-014",
+  "name": "Early Arrears Nudge",
+  "version": "v3",
+  "targetSegment": "Friction Payers",
+  "channelMix": [
+   "WhatsApp/EWP",
+   "Email"
+  ],
+  "startedAt": "2026-08-01",
+  "accountsTreated": 667,
+  "resolved": 334,
+  "resolutionRate": 0.5,
+  "cost": 186.5,
+  "costPerResolution": 0.56,
+  "valueResolved": 354779.42,
+  "costPerRinggitRecovered": 0.00053
+ },
+ {
+  "id": "SEQ-018",
+  "name": "Early Arrears Nudge",
+  "version": "v2",
+  "targetSegment": "Friction Payers",
+  "channelMix": [
+   "SMS/IVR"
+  ],
+  "startedAt": "2026-05-27",
+  "accountsTreated": 1584,
+  "resolved": 760,
+  "resolutionRate": 0.48,
+  "cost": 302.88,
+  "costPerResolution": 0.4,
+  "valueResolved": 285537.83,
+  "costPerRinggitRecovered": 0.00106
+ },
+ {
+  "id": "SEQ-022",
+  "name": "Instalment Offer",
+  "version": "v3",
+  "targetSegment": "Constrained",
+  "channelMix": [
+   "WhatsApp/EWP",
+   "Email"
+  ],
+  "startedAt": "2026-07-15",
+  "accountsTreated": 1141,
+  "resolved": 399,
+  "resolutionRate": 0.35,
+  "cost": 308.74,
+  "costPerResolution": 0.77,
+  "valueResolved": 518335.11,
+  "costPerRinggitRecovered": 0.0006
+ },
+ {
+  "id": "SEQ-027",
+  "name": "Hardship Check-in",
+  "version": "v1",
+  "targetSegment": "Constrained",
+  "channelMix": [
+   "WhatsApp/EWP"
+  ],
+  "startedAt": "2026-07-03",
+  "accountsTreated": 1004,
+  "resolved": 291,
+  "resolutionRate": 0.29,
+  "cost": 271.93,
+  "costPerResolution": 0.93,
+  "valueResolved": 207822.24,
+  "costPerRinggitRecovered": 0.00131
+ },
+ {
+  "id": "SEQ-031",
+  "name": "Formal Notice Pre-warning",
+  "version": "v2",
+  "targetSegment": "Refusers",
+  "channelMix": [
+   "Print",
+   "SMS/IVR"
+  ],
+  "startedAt": "2026-05-31",
+  "accountsTreated": 388,
+  "resolved": 85,
+  "resolutionRate": 0.22,
+  "cost": 1966.15,
+  "costPerResolution": 23.13,
+  "valueResolved": 105794.99,
+  "costPerRinggitRecovered": 0.01858
+ },
+ {
+  "id": "SEQ-035",
+  "name": "Final Demand Sequence",
+  "version": "v1",
+  "targetSegment": "Refusers",
+  "channelMix": [
+   "Print"
+  ],
+  "startedAt": "2026-08-01",
+  "accountsTreated": 2068,
+  "resolved": 331,
+  "resolutionRate": 0.16,
+  "cost": 7221.42,
+  "costPerResolution": 21.82,
+  "valueResolved": 398447.04,
+  "costPerRinggitRecovered": 0.01812
+ },
+ {
+  "id": "SEQ-041",
+  "name": "Voice AI Outbound Reminder",
+  "version": "v2",
+  "targetSegment": "Friction Payers",
+  "channelMix": [
+   "Voice AI"
+  ],
+  "startedAt": "2026-06-19",
+  "accountsTreated": 1051,
+  "resolved": 483,
+  "resolutionRate": 0.46,
+  "cost": 368.87,
+  "costPerResolution": 0.76,
+  "valueResolved": 492027.97,
+  "costPerRinggitRecovered": 0.00075
+ },
+ {
+  "id": "SEQ-044",
+  "name": "Dormant Review",
+  "version": "v1",
+  "targetSegment": "Non-viable",
+  "channelMix": [
+   "Email"
+  ],
+  "startedAt": "2026-07-26",
+  "accountsTreated": 1485,
+  "resolved": 178,
+  "resolutionRate": 0.12,
+  "cost": 295.37,
+  "costPerResolution": 1.66,
+  "valueResolved": 126640.28,
+  "costPerRinggitRecovered": 0.00233
+ }
+]

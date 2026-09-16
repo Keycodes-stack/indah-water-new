@@ -1,0 +1,270 @@
+{
+ "agencies": [
+  {
+   "id": "DCA-01",
+   "name": "Perdana Recovery Sdn Bhd",
+   "activeSince": "2024-05-04",
+   "accountsPlaced": 29,
+   "valuePlaced": 188512.09,
+   "contactRate": 0.64,
+   "collectionRate": 0.17,
+   "amountCollected": 32047.06,
+   "complaintsPer1000": 0.43,
+   "sameDayRecalls": 10
+  },
+  {
+   "id": "DCA-02",
+   "name": "Amanah Collections Bhd",
+   "activeSince": "2023-01-19",
+   "accountsPlaced": 27,
+   "valuePlaced": 183816.96,
+   "contactRate": 0.57,
+   "collectionRate": 0.22,
+   "amountCollected": 40439.73,
+   "complaintsPer1000": 0.89,
+   "sameDayRecalls": 35
+  },
+  {
+   "id": "DCA-03",
+   "name": "Sentosa Debt Services",
+   "activeSince": "2023-06-11",
+   "accountsPlaced": 25,
+   "valuePlaced": 188188.57,
+   "contactRate": 0.59,
+   "collectionRate": 0.16,
+   "amountCollected": 30110.17,
+   "complaintsPer1000": 1.1,
+   "sameDayRecalls": 13
+  },
+  {
+   "id": "DCA-04",
+   "name": "Bumi Kredit Management",
+   "activeSince": "2023-01-07",
+   "accountsPlaced": 33,
+   "valuePlaced": 173613.49,
+   "contactRate": 0.55,
+   "collectionRate": 0.14,
+   "amountCollected": 24305.89,
+   "complaintsPer1000": 1.05,
+   "sameDayRecalls": 11
+  }
+ ],
+ "recalls": [
+  {
+   "date": "2026-09-12",
+   "customerId": "ACC-100471",
+   "agencyId": "DCA-04",
+   "amountPaid": 123.27,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-09-12",
+   "customerId": "ACC-100221",
+   "agencyId": "DCA-04",
+   "amountPaid": 299.17,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-09-10",
+   "customerId": "ACC-100063",
+   "agencyId": "DCA-04",
+   "amountPaid": 322.09,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-08-31",
+   "customerId": "ACC-100336",
+   "agencyId": "DCA-01",
+   "amountPaid": 993.82,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-08-31",
+   "customerId": "ACC-100122",
+   "agencyId": "DCA-02",
+   "amountPaid": 396.93,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-08-29",
+   "customerId": "ACC-100493",
+   "agencyId": "DCA-04",
+   "amountPaid": 164.88,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-08-29",
+   "customerId": "ACC-100321",
+   "agencyId": "DCA-03",
+   "amountPaid": 430.4,
+   "reason": "Payment received",
+   "sameDay": false
+  },
+  {
+   "date": "2026-08-07",
+   "customerId": "ACC-100098",
+   "agencyId": "DCA-01",
+   "amountPaid": 430.96,
+   "reason": "Payment received",
+   "sameDay": false
+  },
+  {
+   "date": "2026-08-06",
+   "customerId": "ACC-100255",
+   "agencyId": "DCA-04",
+   "amountPaid": 765.99,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-08-06",
+   "customerId": "ACC-100084",
+   "agencyId": "DCA-04",
+   "amountPaid": 5472.89,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-29",
+   "customerId": "ACC-100219",
+   "agencyId": "DCA-01",
+   "amountPaid": 468.75,
+   "reason": "Payment received",
+   "sameDay": false
+  },
+  {
+   "date": "2026-07-26",
+   "customerId": "ACC-100462",
+   "agencyId": "DCA-03",
+   "amountPaid": 398.45,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-24",
+   "customerId": "ACC-100496",
+   "agencyId": "DCA-02",
+   "amountPaid": 1554.46,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-24",
+   "customerId": "ACC-100356",
+   "agencyId": "DCA-03",
+   "amountPaid": 26763.6,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-17",
+   "customerId": "ACC-100361",
+   "agencyId": "DCA-01",
+   "amountPaid": 519.76,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-10",
+   "customerId": "ACC-100242",
+   "agencyId": "DCA-04",
+   "amountPaid": 789.37,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-09",
+   "customerId": "ACC-100317",
+   "agencyId": "DCA-04",
+   "amountPaid": 621.33,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-09",
+   "customerId": "ACC-100085",
+   "agencyId": "DCA-02",
+   "amountPaid": 893.54,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-08",
+   "customerId": "ACC-100230",
+   "agencyId": "DCA-03",
+   "amountPaid": 601.26,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-07",
+   "customerId": "ACC-100508",
+   "agencyId": "DCA-03",
+   "amountPaid": 1254.99,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-07-03",
+   "customerId": "ACC-100458",
+   "agencyId": "DCA-02",
+   "amountPaid": 3202.6,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-06-28",
+   "customerId": "ACC-100342",
+   "agencyId": "DCA-02",
+   "amountPaid": 5387.43,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-06-24",
+   "customerId": "ACC-100369",
+   "agencyId": "DCA-02",
+   "amountPaid": 2664.32,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-06-24",
+   "customerId": "ACC-100217",
+   "agencyId": "DCA-01",
+   "amountPaid": 38004.46,
+   "reason": "Payment received",
+   "sameDay": false
+  },
+  {
+   "date": "2026-06-22",
+   "customerId": "ACC-100145",
+   "agencyId": "DCA-04",
+   "amountPaid": 906.92,
+   "reason": "Payment received",
+   "sameDay": true
+  },
+  {
+   "date": "2026-06-17",
+   "customerId": "ACC-100512",
+   "agencyId": "DCA-03",
+   "amountPaid": 1523.79,
+   "reason": "Payment received",
+   "sameDay": true
+  }
+ ],
+ "legal": {
+  "demandPacksGenerated": 58,
+  "demandPacksServed": 45,
+  "pendingLegalReview": 20,
+  "writeOffRecommended": 16,
+  "writeOffApproved": 7,
+  "statuteReference": "s.88(2) Water Services Industry Act 2006"
+ }
+}
