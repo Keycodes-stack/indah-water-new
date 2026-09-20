@@ -7,22 +7,20 @@ import Layout from "./components/Layout.jsx";
 import Login from "./pages/Login.jsx";
 import Overview from "./pages/Overview.jsx";
 import VoiceAI from "./pages/VoiceAI.jsx";
+import CallLogs from "./pages/CallLogs.jsx";
+import VoiceAgents from "./pages/VoiceAgents.jsx";
 import CallJoin from "./pages/CallJoin.jsx";
 import CallAlerts from "./pages/CallAlerts.jsx";
 import OutboundCaller from "./pages/OutboundCaller.jsx";
 import UnifiedInbox from "./pages/UnifiedInbox.jsx";
-import BookPosition from "./pages/BookPosition.jsx";
-import Segments from "./pages/Segments.jsx";
-import Treatment from "./pages/Treatment.jsx";
-import Performance from "./pages/Performance.jsx";
-import Compliance from "./pages/Compliance.jsx";
-import DcaLegal from "./pages/DcaLegal.jsx";
-import Geography from "./pages/Geography.jsx";
 import Customers from "./pages/Customers.jsx";
 import Settings from "./pages/Settings.jsx";
 import FollowUps from "./pages/FollowUps.jsx";
-import TicketsKanban from "./pages/TicketsKanban.jsx";
 import Testing from "./pages/Testing.jsx";
+import FieldsStructure from "./pages/FieldsStructure.jsx";
+import ReviewPanel from "./pages/ReviewPanel.jsx";
+import EscalatePanel from "./pages/EscalatePanel.jsx";
+import Workflows from "./pages/Workflows.jsx";
 
 function RequireAuth({ children }) {
   const location = useLocation();
@@ -54,13 +52,22 @@ export default function App() {
           >
             {/* Pages accessible to both Admin and Supervisor */}
             <Route index element={<Overview />} />
-            <Route path="/voice-ai" element={<VoiceAI />} />
+            <Route path="/call-logs" element={<CallLogs />} />
+            <Route path="/interactions" element={<CallLogs />} />
+            <Route path="/voice-ai" element={<CallLogs />} />
+            <Route path="/voice-agents" element={<VoiceAgents />} />
             <Route path="/outbound-caller" element={<OutboundCaller />} />
-            <Route path="/tickets" element={<TicketsKanban />} />
+            <Route path="/call-monitoring" element={<CallJoin />} />
             <Route path="/call/join" element={<CallJoin />} />
             <Route path="/call-alerts" element={<CallAlerts />} />
             <Route path="/follow-ups" element={<FollowUps />} />
             <Route path="/testing" element={<Testing />} />
+            <Route path="/fields-insights" element={<FieldsStructure />} />
+            <Route path="/fields-structure" element={<FieldsStructure />} />
+            <Route path="/review-panel" element={<ReviewPanel />} />
+            <Route path="/escalate-panel" element={<EscalatePanel />} />
+            <Route path="/workflows" element={<Workflows />} />
+            <Route path="/settings" element={<Settings />} />
 
             {/* Pages restricted to Admin only */}
             <Route
@@ -72,74 +79,10 @@ export default function App() {
               }
             />
             <Route
-              path="/book-position"
-              element={
-                <RequireAdmin>
-                  <BookPosition />
-                </RequireAdmin>
-              }
-            />
-            <Route
-              path="/segments"
-              element={
-                <RequireAdmin>
-                  <Segments />
-                </RequireAdmin>
-              }
-            />
-            <Route
-              path="/treatment"
-              element={
-                <RequireAdmin>
-                  <Treatment />
-                </RequireAdmin>
-              }
-            />
-            <Route
-              path="/performance"
-              element={
-                <RequireAdmin>
-                  <Performance />
-                </RequireAdmin>
-              }
-            />
-            <Route
-              path="/compliance"
-              element={
-                <RequireAdmin>
-                  <Compliance />
-                </RequireAdmin>
-              }
-            />
-            <Route
-              path="/dca-legal"
-              element={
-                <RequireAdmin>
-                  <DcaLegal />
-                </RequireAdmin>
-              }
-            />
-            <Route
-              path="/geography"
-              element={
-                <RequireAdmin>
-                  <Geography />
-                </RequireAdmin>
-              }
-            />
-            <Route
               path="/customers"
               element={
                 <RequireAdmin>
                   <Customers />
-                </RequireAdmin>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <RequireAdmin>
-                  <Settings />
                 </RequireAdmin>
               }
             />

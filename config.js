@@ -16,7 +16,8 @@ export const CONFIG = {
     baseUrl: "https://api.vapi.ai",
   },
 
-  // --- Call Alerts feed (n8n webhook, GET) ------------------
+  // --- Call Alerts & Telemetry Webhooks (n8n) ---------------
+  n8nWebhookUrl: "https://praeco.app.n8n.cloud/webhook/fetch-logs",
   alerts: {
     webhookUrl: "https://praeco.app.n8n.cloud/webhook/fetch-alerts",
   },

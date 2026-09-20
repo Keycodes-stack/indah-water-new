@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 
 import { useData } from "../db/store.jsx";
 import { getSupervisors, createSupervisor, deleteSupervisor } from "../auth/session.js";
+import { getStoredTheme, applyTheme } from "../lib/theme.js";
 import { rm, rmUnit, pct } from "../lib/format.js";
 import { Panel, Field, Badge, Modal } from "../components/ui.jsx";
 import logoImg from "../assets/indah-water-logo.png";
@@ -150,9 +151,7 @@ export default function Settings() {
     <>
       <div className="callout">
         <strong>In-Memory Settings.</strong> Saving updates the dashboard immediately
-        but does not write to <code>DB/settings.json</code>. Channel costs drive the
-        figures on <Link to="/treatment">Treatment &amp; Channels</Link> — change one
-        and watch those numbers move.
+        but does not write to <code>DB/settings.json</code>.
       </div>
 
       <div className="grid c2">
@@ -184,50 +183,6 @@ export default function Settings() {
           </p>
         </Panel>
 
-        <Panel
-          title="Contact Policy"
-          sub="Frequency caps and quiet hours enforced across every outbound channel."
-        >
-          <div className="form-grid">
-            <Field label="Quiet Hours Start">
-              <input type="time" value={policy.quietHoursStart}
-                     onChange={(e) => setPolicy({ ...policy, quietHoursStart: e.target.value })} />
-            </Field>
-            <Field label="Quiet Hours End">
-              <input type="time" value={policy.quietHoursEnd}
-                     onChange={(e) => setPolicy({ ...policy, quietHoursEnd: e.target.value })} />
-            </Field>
-            <Field label="Max Contacts Per Week">
-              <input type="number" min="0" value={policy.maxContactsPerWeek}
-                     onChange={(e) => setPolicy({ ...policy, maxContactsPerWeek: Number(e.target.value) })} />
-            </Field>
-            <Field label="Max Contacts Per Day">
-              <input type="number" min="0" value={policy.maxContactsPerDay}
-                     onChange={(e) => setPolicy({ ...policy, maxContactsPerDay: Number(e.target.value) })} />
-            </Field>
-            <Field label="Post-Payment Block (Hours)">
-              <input type="number" min="0" value={policy.postPaymentContactBlockHours}
-                     onChange={(e) => setPolicy({ ...policy, postPaymentContactBlockHours: Number(e.target.value) })} />
-            </Field>
-            <Field label="Suppress On Open Dispute">
-              <select value={policy.suppressOnOpenDispute ? "yes" : "no"}
-                      onChange={(e) => setPolicy({ ...policy, suppressOnOpenDispute: e.target.value === "yes" })}>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </Field>
-            <Field label="Suppress On Deceased Estate">
-              <select value={policy.suppressOnDeceasedEstate ? "yes" : "no"}
-                      onChange={(e) => setPolicy({ ...policy, suppressOnDeceasedEstate: e.target.value === "yes" })}>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </Field>
-          </div>
-        </Panel>
-      </div>
-
-      <div className="grid c2">
         <Panel
           title="Appearance & UI Theme"
           sub="Toggle between White (Lite) Theme and Dark Theme across the application."
@@ -273,75 +228,7 @@ export default function Settings() {
             </button>
           </div>
         </Panel>
-
-        <Panel
-          title="Call Alerts Settings"
-          sub="Where flagged calls from the alerts feed get delivered."
-        >
-          <div className="channel-cards">
-            {ALERT_CHANNELS.map((c) => (
-              <div
-                key={c.key}
-                className={`channel-card${c.connected ? " is-connected" : ""}`}
-              >
-                <div className="channel-icon" aria-hidden="true">{c.icon}</div>
-                <div className="channel-name">{c.name}</div>
-                <p className="channel-detail">{c.detail}</p>
-                <button
-                  className={`channel-btn${c.connected ? " connected" : ""}`}
-                  onClick={() => setAlertChannel(c)}
-                >
-                  {c.connected ? "✓ Connected" : "Connect"}
-                </button>
-              </div>
-            ))}
-          </div>
-          <p className="empty-note" style={{ marginTop: 14 }}>
-            Alerts come from the{" "}
-            <Link to="/call-alerts">Call Alerts</Link> feed.
-          </p>
-        </Panel>
       </div>
-
-      {alertChannel && (
-        <Modal
-          title={
-            alertChannel.connected
-              ? `${alertChannel.name} alerts`
-              : `Connect ${alertChannel.name}`
-          }
-          onClose={() => setAlertChannel(null)}
-          footer={
-            <button className="btn-solid" onClick={() => setAlertChannel(null)}>
-              Close
-            </button>
-          }
-        >
-          <div className="gate" style={{ margin: 0, padding: "22px 8px", boxShadow: "none", border: "none", background: "none" }}>
-            <div
-              className="gate-icon"
-              style={
-                alertChannel.connected
-                  ? { background: "var(--good-soft)", borderColor: "var(--good)" }
-                  : undefined
-              }
-              aria-hidden="true"
-            >
-              {alertChannel.connected ? "✓" : "🔒"}
-            </div>
-            <h2 style={{ fontSize: 17 }}>
-              {alertChannel.connected
-                ? "Already connected"
-                : "Paid subscription required"}
-            </h2>
-            <p>
-              {alertChannel.connected
-                ? `${alertChannel.name} alerts are already connected and active. Flagged calls are delivered to the operations inbox — nothing to set up.`
-                : `Connecting ${alertChannel.name} alerts requires a paid subscription and additional setup before it can be enabled.`}
-            </p>
-          </div>
-        </Modal>
-      )}
 
       <Panel
         title="Supervisor & Team Access Management"
@@ -492,61 +379,6 @@ export default function Settings() {
           </form>
         </Modal>
       )}
-
-      <Panel
-        title="Channel Unit Costs"
-        sub="Cost of a single touch on each channel. These drive every cost figure on the Treatment page."
-      >
-        <div className="form-grid">
-          {Object.entries(costs).map(([channel, value]) => (
-            <Field key={channel} label={`${channel} (RM)`}>
-              <input
-                type="number" min="0" step="0.001" value={value}
-                data-cost={channel}
-                onChange={(e) => setCosts({ ...costs, [channel]: e.target.value })}
-              />
-            </Field>
-          ))}
-        </div>
-        <p className="empty-note" style={{ marginTop: 12 }}>
-          A digital touch costs {rmUnit(costs["WhatsApp/EWP"] || 0)}; a legal demand pack
-          costs {rm(costs["Legal Demand Pack"] || 0)} — roughly{" "}
-          {Math.round((costs["Legal Demand Pack"] || 0) / Math.max(costs["WhatsApp/EWP"] || 0.01, 0.001)).toLocaleString()}× more.
-        </p>
-      </Panel>
-
-      <Panel title="Performance Targets" sub="Thresholds the Performance and Compliance pages measure against.">
-        <div className="form-grid">
-          <Field label="Contactability Rate (0–1)">
-            <input type="number" min="0" max="1" step="0.01" value={targets.contactabilityRate}
-                   onChange={(e) => setTargets({ ...targets, contactabilityRate: e.target.value })} />
-          </Field>
-          <Field label="Conversion Rate (0–1)">
-            <input type="number" min="0" max="1" step="0.01" value={targets.conversionRate}
-                   onChange={(e) => setTargets({ ...targets, conversionRate: e.target.value })} />
-          </Field>
-          <Field label="Promise-Kept Rate (0–1)">
-            <input type="number" min="0" max="1" step="0.01" value={targets.promiseKeptRate}
-                   onChange={(e) => setTargets({ ...targets, promiseKeptRate: e.target.value })} />
-          </Field>
-          <Field label="Complaints Per 1,000">
-            <input type="number" min="0" step="0.01" value={targets.complaintsPer1000}
-                   onChange={(e) => setTargets({ ...targets, complaintsPer1000: e.target.value })} />
-          </Field>
-          <Field label="Post-Payment Contacts">
-            <input type="number" min="0" value={targets.postPaymentContacts}
-                   onChange={(e) => setTargets({ ...targets, postPaymentContacts: e.target.value })} />
-          </Field>
-          <Field label="Cost Per RM Recovered">
-            <input type="number" min="0" step="0.001" value={targets.costPerRinggitRecovered}
-                   onChange={(e) => setTargets({ ...targets, costPerRinggitRecovered: e.target.value })} />
-          </Field>
-        </div>
-        <p className="empty-note" style={{ marginTop: 12 }}>
-          Current targets: {pct(Number(targets.contactabilityRate) || 0, 0)} contactability,{" "}
-          {pct(Number(targets.conversionRate) || 0, 0)} conversion, zero post-payment contact.
-        </p>
-      </Panel>
 
       <div className="footer-bar">
         <span>

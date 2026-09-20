@@ -239,7 +239,7 @@ export default function CallAlerts() {
     }
     ring.stop();
     setIncoming(null);
-    navigate(`/tickets?account=${ticket?.accountNo || ticket?.id || ""}`);
+    navigate(`/customers?q=${ticket?.accountNo || ticket?.id || ""}`);
   }, [currentUsername, navigate]);
 
   const incomingTicket = useMemo(() => {
@@ -384,7 +384,7 @@ export default function CallAlerts() {
           </div>
         </div>
         <Link
-          to="/tickets"
+          to="/customers"
           className="btn"
           style={{
             background: "var(--brand)",
@@ -399,7 +399,7 @@ export default function CallAlerts() {
             gap: 6,
           }}
         >
-          Open CRM Kanban Board →
+          View Customers →
         </Link>
       </div>
 
@@ -532,7 +532,7 @@ export default function CallAlerts() {
                       <div>
                         <div style={{ fontWeight: 600, fontSize: 13 }}>
                           <Link
-                            to={`/tickets?account=${r.linkedTicket.accountNo}`}
+                            to={`/customers?q=${r.linkedTicket.accountNo}`}
                             style={{ color: "var(--brand)", textDecoration: "none" }}
                           >
                             {r.linkedTicket.name}

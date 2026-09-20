@@ -1,5 +1,27 @@
 /* Clean, reusable SVG Icon Components to replace all inline emojis across the dashboard */
 
+export function AgentIcon({ size = 16, className = "" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+      <line x1="12" x2="12" y1="18" y2="22" />
+      <line x1="8" x2="16" y1="22" y2="22" />
+    </svg>
+  );
+}
+
 export function SunIcon({ size = 16, className = "" }) {
   return (
     <svg
@@ -796,6 +818,30 @@ export function AlertCircleIcon({ size = 16, className = "" }) {
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+export function WorkflowIcon({ size = 16, className = "" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="6" height="6" rx="1" />
+      <rect x="15" y="3" width="6" height="6" rx="1" />
+      <rect x="9" y="15" width="6" height="6" rx="1" />
+      <path d="M6 9v3a2 2 0 0 0 2 2h4" />
+      <path d="M18 9v3a2 2 0 0 1-2 2h-4" />
+      <path d="M12 14v1" />
     </svg>
   );
 }

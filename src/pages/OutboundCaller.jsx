@@ -3,6 +3,7 @@
    ============================================================ */
 
 import { useState, useRef, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Panel, Badge, Modal } from "../components/ui.jsx";
 
 const VAPI_TEST_URL =
@@ -117,6 +118,7 @@ function statusTone(status) {
 }
 
 export default function OutboundCaller() {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState(INITIAL_LEADS);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -125,27 +127,6 @@ export default function OutboundCaller() {
   const [countdown, setCountdown] = useState(null);
 
   const fileInputRef = useRef(null);
-
-  // Auto redirect timer when calling modal is open
-  useEffect(() => {
-    let timer;
-    if (callingLead) {
-      setCountdown(3);
-      timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            proceedToVapi();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      setCountdown(null);
-    }
-    return () => clearInterval(timer);
-  }, [callingLead]);
 
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
@@ -163,7 +144,7 @@ export default function OutboundCaller() {
   }, [leads, search, statusFilter]);
 
   const handleCallClick = (lead) => {
-    setCallingLead(lead);
+    navigate("/testing");
   };
 
   const proceedToVapi = () => {

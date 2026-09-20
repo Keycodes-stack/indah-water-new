@@ -8,24 +8,18 @@ import logoImg from "../assets/indah-water-logo.png";
 import {
   DashboardIcon,
   VoiceIcon,
+  AgentIcon,
   PhoneCallIcon,
-  TicketIcon,
   RefreshIcon,
   PhoneIcon,
   AlertTriangleIcon,
   InboxIcon,
-  BarChartIcon,
-  PieChartIcon,
-  LayersIcon,
-  TrendingUpIcon,
-  ShieldCheckIcon,
-  ScaleIcon,
-  MapPinIcon,
   UsersIcon,
   SettingsIcon,
   TestIcon,
   SunIcon,
   MoonIcon,
+  WorkflowIcon,
 } from "./icons.jsx";
 
 const NAV = [
@@ -33,35 +27,15 @@ const NAV = [
     group: null,
     items: [
       { to: "/", label: "Dashboard", icon: <DashboardIcon size={16} />, end: true },
-      { to: "/voice-ai", label: "Voice AI", icon: <VoiceIcon size={16} /> },
+      { to: "/call-logs", label: "Call Logs", icon: <VoiceIcon size={16} /> },
+      { to: "/review-panel", label: "Review Panel", icon: <AlertTriangleIcon size={16} /> },
+      { to: "/escalate-panel", label: "Escalate Panel", icon: <AlertTriangleIcon size={16} /> },
+      { to: "/workflows", label: "Workflows", icon: <WorkflowIcon size={16} /> },
+      { to: "/voice-agents", label: "Voice Agents", icon: <AgentIcon size={16} /> },
       { to: "/outbound-caller", label: "Outbound Caller", icon: <PhoneCallIcon size={16} /> },
-      { to: "/tickets", label: "CRM Tickets", icon: <TicketIcon size={16} /> },
-      { to: "/follow-ups", label: "Follow-Ups Queue", icon: <RefreshIcon size={16} /> },
       { to: "/testing", label: "Testing", icon: <TestIcon size={16} /> },
-      { to: "/call/join", label: "Call / Join", icon: <PhoneIcon size={16} /> },
-      { to: "/call-alerts", label: "Call Alerts", icon: <AlertTriangleIcon size={16} /> },
+      { to: "/call-monitoring", label: "Call Monitoring", icon: <PhoneIcon size={16} /> },
     ],
-  },
-  {
-    group: "Collections",
-    items: [
-      { to: "/unified-inbox", label: "Unified Inbox", icon: <InboxIcon size={16} /> },
-      { to: "/book-position", label: "Book Position", icon: <BarChartIcon size={16} /> },
-      { to: "/segments", label: "Segments", icon: <PieChartIcon size={16} /> },
-      { to: "/treatment", label: "Treatment & Channels", icon: <LayersIcon size={16} /> },
-      { to: "/performance", label: "Performance", icon: <TrendingUpIcon size={16} /> },
-    ],
-  },
-  {
-    group: "Governance",
-    items: [
-      { to: "/compliance", label: "Compliance", icon: <ShieldCheckIcon size={16} /> },
-      { to: "/dca-legal", label: "DCA & Legal", icon: <ScaleIcon size={16} /> },
-    ],
-  },
-  {
-    group: "Geography",
-    items: [{ to: "/geography", label: "Areas", icon: <MapPinIcon size={16} /> }],
   },
   {
     group: "Data",
@@ -74,21 +48,20 @@ const NAV = [
 
 const TITLES = {
   "/": ["Dashboard", "Collections And Voice AI At A Glance"],
-  "/voice-ai": ["Voice AI", "Live Call Logs, Cost And Recordings From Vapi"],
+  "/call-logs": ["Call Logs", "Live Telemetry And Call Recording Logs From Webhook"],
+  "/review-panel": ["Review Panel", "Grey Zone Hardship, Dispute & Assistance Review Cases"],
+  "/escalate-panel": ["Escalate Panel", "Red Zone Refusal, DND Compliance & Legal Escalations"],
+  "/workflows": ["Workflows", "Interactive Node-Based Workflow Automation Builder"],
+  "/interactions": ["Call Logs", "Live Telemetry And Call Recording Logs From Webhook"],
+  "/voice-ai": ["Call Logs", "Live Telemetry And Call Recording Logs From Webhook"],
+  "/voice-agents": ["Voice Agents", "Configure Agent Personas, Speech Voices, Empathy Sliders And Conversation Prompts"],
   "/outbound-caller": ["Outbound Caller", "Automated AI Outbound Campaign Dialing"],
-  "/tickets": ["Ticketing & CRM Kanban", "Account Tickets Organized By Collection Ladder Stages"],
   "/follow-ups": ["Follow-Ups Queue", "Scheduled Future Cadence & Delivery Log"],
   "/testing": ["Testing & Live Agent Dialing", "Test Voice AI Assistant & Direct SIM Calling"],
   "/unified-inbox": ["Unified Inbox", "Omnichannel Messaging, Sentiment Analysis And Channel Reply Rates"],
-  "/call/join": ["Call / Join", "Place An Outbound Call Or Join A Live One"],
+  "/call-monitoring": ["Call Monitoring", "Real-Time AI Voice Call Listening, Takeover And Supervisor Monitoring"],
+  "/call/join": ["Call Monitoring", "Real-Time AI Voice Call Listening, Takeover And Supervisor Monitoring"],
   "/call-alerts": ["Call Alerts", "Flagged Calls From The Alerts Webhook"],
-  "/book-position": ["Book Position & Movement", "Arrears By Category And Ladder Stage"],
-  "/segments": ["Segment Breakdown", "Operating Segments And Special-Routing Populations"],
-  "/treatment": ["Treatment & Channel Activity", "Contacts, Delivery And The Cost Of A Touch"],
-  "/performance": ["Conversion & Collections Performance", "Performance KPIs"],
-  "/compliance": ["Compliance & Conduct", "Governance View"],
-  "/dca-legal": ["DCA & Legal Handover", "Agency Placement And Statutory Action"],
-  "/geography": ["Geographic Layer", "Arrears Concentration And Ageing By Area"],
   "/customers": ["Customers", "Account Records — Add, Edit And Delete"],
   "/settings": ["Settings", "Organisation Profile, Contact Policy And Channel Costs"],
 };
@@ -112,8 +85,12 @@ export default function Layout() {
 
   const userSession = session();
   const isSupervisor = userSession?.role === "supervisor";
-
-  const visibleNav = isSupervisor ? [NAV[0]] : NAV;
+  const visibleNav = isSupervisor
+    ? NAV.map((g) => ({
+        ...g,
+        items: g.items.filter((it) => it.to !== "/unified-inbox" && it.to !== "/customers"),
+      })).filter((g) => g.items.length > 0)
+    : NAV;
 
   const [title, sub] = TITLES[pathname] || ["Dashboard", ""];
   const org = settings.organisation;
