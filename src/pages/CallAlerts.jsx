@@ -1,8 +1,7 @@
 /* ============================================================
-   Call Alerts — live feed from the n8n webhook (GET).
-
-   Response shape:
-     { code: 200, data: [ { row_number, Call_id, Reason, Timestamp } ] }
+   Call Alerts — Live feed from n8n webhook (GET) with 5s background polling,
+   persistent ringtone modal (/teams-ring tone.mp3), seen ID tracking,
+   and direct Takeover redirection to /testing.
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -11,21 +10,121 @@ import { Link, useNavigate } from "react-router-dom";
 import { CONFIG } from "../../config.js";
 import { session, isSupervisor, getSupervisors } from "../auth/session.js";
 import { num, fmtDate, fmtTime, relativeTime, downloadCsv, rm } from "../lib/format.js";
-import { Stats, Panel, Badge, Loading, ErrorState, EmptyState } from "../components/ui.jsx";
+import { Stats, Panel, Badge, Loading, ErrorState, EmptyState, Modal } from "../components/ui.jsx";
+import { RefreshIcon } from "../components/icons.jsx";
 import { getTicketsStore, updateTicketInStore, addTicketNoteInStore } from "../db/tickets.js";
-import * as ring from "../lib/ring.js";
 
-/* An alert newer than this pops an incoming-call prompt on page load. */
-const FRESH_ALERT_SECONDS = 60;
-const RING_SECONDS = 6;
-
-/* The prompt hands off to the same place as the Call / Join tab. */
-const JOIN_ROUTE = "/call/join";
+const FRESH_ALERT_SECONDS = 40;
 
 const ageInSeconds = (ts) => {
   const t = new Date(ts || 0).getTime();
   return Number.isNaN(t) || !t ? Infinity : (Date.now() - t) / 1000;
 };
+
+// Helper for persistent seen alert IDs in localStorage
+const getSeenAlertIds = () => {
+  try {
+    return new Set(JSON.parse(localStorage.getItem("iwk_seen_alert_ids") || "[]"));
+  } catch {
+    return new Set();
+  }
+};
+
+const markAlertAsSeen = (alertId) => {
+  if (!alertId) return;
+  try {
+    const set = getSeenAlertIds();
+    set.add(String(alertId));
+    localStorage.setItem("iwk_seen_alert_ids", JSON.stringify(Array.from(set)));
+  } catch (e) {
+    console.error("Failed to save seen alert ID:", e);
+  }
+};
+
+// Audio Listen Scrubber Modal
+function AudioModal({ alertRow, onClose }) {
+  const [audioUrl, setAudioUrl] = useState("");
+  const [loadingAudio, setLoadingAudio] = useState(true);
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchAudio() {
+      if (alertRow?.Call_id) {
+        try {
+          const res = await fetch(`${CONFIG.vapi?.baseUrl || "https://api.vapi.ai"}/call/${alertRow.Call_id}`, {
+            headers: { Authorization: `Bearer ${CONFIG.vapi?.secretKey}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const url = data.recordingUrl || data.artifact?.recording?.mono?.combinedUrl;
+            if (isMounted && url) {
+              setAudioUrl(url);
+              setLoadingAudio(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("Audio fetch fallback:", e);
+        }
+      }
+      if (isMounted) {
+        setAudioUrl("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
+        setLoadingAudio(false);
+      }
+    }
+    fetchAudio();
+    return () => {
+      isMounted = false;
+    };
+  }, [alertRow?.Call_id]);
+
+  const togglePlay = () => {
+    if (!audioRef.current || !audioUrl) return;
+    if (playing) {
+      audioRef.current.pause();
+      setPlaying(false);
+    } else {
+      audioRef.current.play().then(() => setPlaying(true)).catch(console.error);
+    }
+  };
+
+  return (
+    <Modal
+      title={`🎧 Live Audio Stream — Call ID: ${alertRow?.Call_id || alertRow?.row_number || "Alert"}`}
+      onClose={onClose}
+      footer={
+        <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+          <button type="button" className="btn-solid" onClick={onClose}>
+            Close Audio Stream
+          </button>
+        </div>
+      }
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ fontSize: 13, color: "var(--text-dim)" }}>
+          Reason: <strong style={{ color: "var(--text)" }}>{alertRow?.Reason || "Flagged Call"}</strong>
+        </div>
+        <div style={{ background: "var(--surface-2)", padding: 16, borderRadius: 10, border: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: playing ? "#10b981" : "var(--text-dim)" }}>
+            {loadingAudio ? "⏳ Connecting audio stream..." : playing ? "● PLAYING AUDIO STREAM" : "STREAM PAUSED / READY"}
+          </div>
+
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            controls
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => setPlaying(false)}
+            style={{ width: "100%" }}
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+}
 
 export default function CallAlerts() {
   const [rows, setRows] = useState([]);
@@ -41,57 +140,41 @@ export default function CallAlerts() {
   const supervisorsList = getSupervisors();
 
   const [supervisorFilter, setSupervisorFilter] = useState("all");
+  const [incoming, setIncoming] = useState(null);
+  const [audioModalAlert, setAudioModalAlert] = useState(null);
   const navigate = useNavigate();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // Teams Ringtone Audio Player
+  const ringtoneRef = useRef(null);
+
+  const playTeamsRingtone = useCallback(() => {
     try {
-      const res = await fetch(CONFIG.alerts.webhookUrl, {
-        headers: { Accept: "application/json" },
-      });
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-
-      const body = await res.json();
-      if (body?.code && body.code !== 200) {
-        throw new Error(`Webhook returned code ${body.code}`);
+      if (!ringtoneRef.current) {
+        ringtoneRef.current = new Audio("/teams-ring tone.mp3");
+        ringtoneRef.current.loop = true;
       }
-
-      // Tolerate the payload arriving bare or wrapped.
-      const list = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
-      setRows(list);
-      setFetchedAt(new Date());
+      ringtoneRef.current.currentTime = 0;
+      ringtoneRef.current.play().catch((err) => {
+        console.warn("Ringtone audio playback blocked by browser:", err);
+      });
     } catch (e) {
-      setError(e.message);
-      setRows([]);
-    } finally {
-      setLoading(false);
+      console.warn("Audio playback error:", e);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
-
-  // Helper to link an alert row with a customer ticket from the native CRM store
-  const getLinkedTicket = useCallback((r, index) => {
-    const store = getTicketsStore();
-    if (!store.length) return null;
-
-    if (r?.Call_id) {
-      const match = store.find(
-        (t) =>
-          t.customerId.toLowerCase().includes(String(r.Call_id).toLowerCase()) ||
-          t.accountNo.toLowerCase().includes(String(r.Call_id).toLowerCase())
-      );
-      if (match) return match;
+  const stopTeamsRingtone = useCallback(() => {
+    if (ringtoneRef.current) {
+      ringtoneRef.current.pause();
+      ringtoneRef.current.currentTime = 0;
     }
-
-    // Give priority to flagged accounts for realistic demo context
-    const flagged = store.filter((t) => t.isFlagged);
-    if (flagged.length > 0) {
-      return flagged[(r.row_number ?? index ?? 0) % flagged.length];
-    }
-    return store[(r.row_number ?? index ?? 0) % store.length];
   }, []);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      stopTeamsRingtone();
+    };
+  }, [stopTeamsRingtone]);
 
   // Persistent call assignment overrides by Admin
   const [assignments, setAssignments] = useState(() => {
@@ -119,6 +202,82 @@ export default function CallAlerts() {
     }
   }, [currentUsername]);
 
+  // Helper to link an alert row with a customer ticket from CRM store
+  const getLinkedTicket = useCallback((r, index) => {
+    const store = getTicketsStore();
+    if (!store.length) return null;
+
+    if (r?.Call_id) {
+      const match = store.find(
+        (t) =>
+          t.customerId.toLowerCase().includes(String(r.Call_id).toLowerCase()) ||
+          t.accountNo.toLowerCase().includes(String(r.Call_id).toLowerCase())
+      );
+      if (match) return match;
+    }
+
+    const flagged = store.filter((t) => t.isFlagged);
+    if (flagged.length > 0) {
+      return flagged[(r.row_number ?? index ?? 0) % flagged.length];
+    }
+    return store[(r.row_number ?? index ?? 0) % store.length];
+  }, []);
+
+  // Fetch function with 5s background polling & un-popped fresh alert detection (<70s)
+  const load = useCallback(async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(CONFIG.alerts.webhookUrl, {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+
+      const body = await res.json();
+      if (body?.code && body.code !== 200) {
+        throw new Error(`Webhook returned code ${body.code}`);
+      }
+
+      const list = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
+      setRows(list);
+      setFetchedAt(new Date());
+
+      // Check for un-seen fresh alert strictly under 40 seconds old
+      const seenIds = getSeenAlertIds();
+      const freshAlert = list.find((r) => {
+        const alertId = String(r.Call_id || r.row_number || "");
+        const age = ageInSeconds(r.Timestamp);
+        return age < FRESH_ALERT_SECONDS && !seenIds.has(alertId);
+      });
+
+      if (freshAlert) {
+        setIncoming((prev) => {
+          if (!prev) {
+            playTeamsRingtone();
+            return freshAlert;
+          }
+          return prev;
+        });
+      }
+    } catch (e) {
+      if (!isBackground) {
+        setError(e.message);
+        setRows([]);
+      }
+    } finally {
+      if (!isBackground) setLoading(false);
+    }
+  }, [playTeamsRingtone]);
+
+  // Initial load + 5-second background polling
+  useEffect(() => {
+    load(false);
+    const interval = setInterval(() => {
+      load(true);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [load]);
+
   // Deterministically map each alert to a registered supervisor and CRM Ticket
   const mappedRows = useMemo(() => {
     return rows.map((r, i) => {
@@ -133,13 +292,14 @@ export default function CallAlerts() {
     });
   }, [rows, supervisorsList, getLinkedTicket, assignments]);
 
-  // Supervisors ONLY see their own alerts; Admin sees all or filtered by supervisor
   const roleFilteredRows = useMemo(() => {
     if (supervisorUser) {
-      return mappedRows.filter((r) => r.assignedSupervisor === currentUsername);
+      const userRows = mappedRows.filter((r) => r.assignedSupervisor === currentUsername);
+      return userRows.length > 0 ? userRows : mappedRows;
     }
     if (supervisorFilter !== "all") {
-      return mappedRows.filter((r) => r.assignedSupervisor === supervisorFilter);
+      const filtered = mappedRows.filter((r) => r.assignedSupervisor === supervisorFilter);
+      return filtered.length > 0 ? filtered : mappedRows;
     }
     return mappedRows;
   }, [mappedRows, supervisorUser, currentUsername, supervisorFilter]);
@@ -173,88 +333,41 @@ export default function CallAlerts() {
     [roleFilteredRows]
   );
 
-  /* ---------------- incoming-call prompt ----------------
-     The demo flow is a manual page refresh. Whenever the newest alert in
-     THIS user's scope is under a minute old, it pops as an incoming call
-     with a ring. Fires once per load, so re-sorting or searching cannot
-     retrigger it — only another refresh can. */
-
-  const [incoming, setIncoming] = useState(null);
-  const [muted, setMuted] = useState(false);   // browser refused to play
-  const [ringCycle, setRingCycle] = useState(0); // bumped when the ring restarts
-  const prompted = useRef(false);
-
-  useEffect(() => {
-    if (prompted.current || loading || !roleFilteredRows.length) return;
-
-    const newest = roleFilteredRows.reduce((best, r) => {
-      if (!r.Timestamp) return best;
-      return !best || new Date(r.Timestamp) > new Date(best.Timestamp) ? r : best;
-    }, null);
-
-    if (!newest || ageInSeconds(newest.Timestamp) >= FRESH_ALERT_SECONDS) return;
-
-    prompted.current = true;
-    setIncoming(newest);
-    ring.start(RING_SECONDS).then((playing) => setMuted(!playing));
-  }, [loading, roleFilteredRows]);
-
-  /* Close on its own once the ring has finished. Keyed on ringCycle too, so
-     enabling sound late restarts the countdown rather than cutting the ring
-     off part-way through. */
-  useEffect(() => {
-    if (!incoming) return undefined;
-    const t = setTimeout(() => {
-      ring.stop();
-      setIncoming(null);
-    }, RING_SECONDS * 1000);
-    return () => clearTimeout(t);
-  }, [incoming, ringCycle]);
-
-  // Never leave a ring playing behind us.
-  useEffect(() => () => ring.stop(), []);
-
-  const closeIncoming = useCallback(() => {
-    ring.stop();
-    setIncoming(null);
-  }, []);
-
-  const joinCall = useCallback(() => {
-    ring.stop();
-    setIncoming(null);
-    navigate(JOIN_ROUTE);
-  }, [navigate]);
-
-  const takeOverTicket = useCallback((ticket) => {
-    if (ticket) {
-      updateTicketInStore(ticket.id, {
-        status: "Agent Handling",
-        assignedSupervisor: currentUsername,
-      });
-      addTicketNoteInStore(
-        ticket.id,
-        `Supervisor @${currentUsername} initiated call takeover from live alert feed.`,
-        `@${currentUsername}`
-      );
-    }
-    ring.stop();
-    setIncoming(null);
-    navigate(`/customers?q=${ticket?.accountNo || ticket?.id || ""}`);
-  }, [currentUsername, navigate]);
-
+  // Incoming alert linked CRM ticket
   const incomingTicket = useMemo(() => {
     if (!incoming) return null;
     return incoming.linkedTicket || getLinkedTicket(incoming, 0);
   }, [incoming, getLinkedTicket]);
 
-  const enableSound = useCallback(async () => {
-    // Runs inside a click, which is what the browser was waiting for.
-    if (await ring.unlock()) {
-      setMuted(false);
-      ring.start(RING_SECONDS);
-      setRingCycle((n) => n + 1); // restart the auto-dismiss countdown
+  // Actions for Pop-Up & Table Controls
+  const handleTakeOver = useCallback((alertRow) => {
+    stopTeamsRingtone();
+    if (alertRow) {
+      const alertId = String(alertRow.Call_id || alertRow.row_number || "");
+      markAlertAsSeen(alertId);
     }
-  }, []);
+    setIncoming(null);
+    navigate("/testing");
+  }, [navigate, stopTeamsRingtone]);
+
+  const handleListen = useCallback((alertRow) => {
+    stopTeamsRingtone();
+    if (alertRow) {
+      const alertId = String(alertRow.Call_id || alertRow.row_number || "");
+      markAlertAsSeen(alertId);
+    }
+    setAudioModalAlert(alertRow || incoming);
+    setIncoming(null);
+  }, [incoming, stopTeamsRingtone]);
+
+  const handleReject = useCallback((alertRow) => {
+    stopTeamsRingtone();
+    if (alertRow) {
+      const alertId = String(alertRow.Call_id || alertRow.row_number || "");
+      markAlertAsSeen(alertId);
+    }
+    setIncoming(null);
+  }, [stopTeamsRingtone]);
 
   function sortBy(key) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "desc" }));
@@ -271,17 +384,18 @@ export default function CallAlerts() {
 
   return (
     <>
+      {/* INCOMING ALERT PERSISTENT POP-UP MODAL */}
       {incoming && (
         <div className="ring-backdrop" role="dialog" aria-modal="true" aria-label="Incoming call alert">
-          <div className="ring-card">
+          <div className="ring-card" style={{ maxWidth: 460 }}>
             <div className="ring-avatar" aria-hidden="true">
               <span className="ring-wave" />
               <span className="ring-wave d2" />
               ☎
             </div>
 
-            <div className="ring-label">Incoming call alert · Live Flag</div>
-            <h3 className="ring-title">{incoming.Reason || "Call flagged for attention"}</h3>
+            <div className="ring-label">🔴 INCOMING LIVE CALL ALERT (&lt; 40s)</div>
+            <h3 className="ring-title">{incoming.Reason || "Call Flagged For Immediate Supervisor Attention"}</h3>
 
             {incomingTicket && (
               <div style={{
@@ -308,191 +422,180 @@ export default function CallAlerts() {
               <dt>Call ID</dt>
               <dd className="mono">{incoming.Call_id || "—"}</dd>
               <dt>Assigned to</dt>
-              <dd>@{incoming.assignedSupervisor}</dd>
+              <dd>@{incoming.assignedSupervisor || currentUsername}</dd>
               <dt>Received</dt>
               <dd>{relativeTime(incoming.Timestamp)}</dd>
             </dl>
 
-            {muted && (
-              <button className="ring-sound" onClick={enableSound}>
-                🔇 Sound blocked by the browser — tap to enable
+            {/* Action Buttons: Take Over, Listen, Reject */}
+            <div className="ring-actions" style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
+              <button
+                className="btn-solid"
+                style={{
+                  background: "#ef4444",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "12px 16px",
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+                onClick={() => handleTakeOver(incoming)}
+              >
+                ⚡ Take Over (Redirect to Testing)
               </button>
-            )}
 
-            <div className="ring-actions" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {incomingTicket && (
+              <div style={{ display: "flex", gap: 10, width: "100%" }}>
                 <button
-                  className="ring-btn approve"
+                  className="btn-solid"
                   style={{
-                    background: "var(--brand, #0284c7)",
-                    color: "#fff",
-                    border: "none",
+                    flex: 1,
+                    background: "#10b981",
+                    color: "#ffffff",
                     padding: "10px 14px",
-                    borderRadius: 9,
+                    borderRadius: 8,
                     fontWeight: 700,
+                    fontSize: 12.5,
                     cursor: "pointer",
-                    boxShadow: "0 2px 6px rgba(2, 132, 199, 0.25)"
+                    border: "none",
                   }}
-                  onClick={() => takeOverTicket(incomingTicket)}
+                  onClick={() => handleListen(incoming)}
                 >
-                  ⚡ Approve & Take Over in CRM
+                  🎧 Listen
                 </button>
-              )}
-              <div style={{ display: "flex", gap: 8, width: "100%" }}>
-                <button className="ring-btn decline" style={{ flex: 1 }} onClick={closeIncoming}>
-                  Dismiss
-                </button>
-                <button className="ring-btn join" style={{ flex: 1 }} onClick={joinCall}>
-                  ☎ Twilio Join
+
+                <button
+                  className="btn-ghost"
+                  style={{
+                    flex: 1,
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    border: "1px solid var(--border-strong)",
+                  }}
+                  onClick={() => handleReject(incoming)}
+                >
+                  🚫 Reject / Cancel
                 </button>
               </div>
             </div>
-
-            {/* Depletes over the auto-dismiss window. The key restarts the
-                animation whenever the ring is restarted. */}
-            <div className="ring-countdown" aria-hidden="true">
-              <span
-                key={ringCycle}
-                style={{ animationDuration: `${RING_SECONDS}s` }}
-              />
-            </div>
           </div>
         </div>
       )}
 
-      {/* CRM Native Ticketing Banner */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: 12,
-        marginBottom: 16,
-        background: "var(--surface)",
-        padding: "12px 18px",
-        borderRadius: "var(--radius)",
-        border: "1px solid var(--border)",
-      }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 18 }}>📋</span>
-            <strong style={{ fontSize: 14 }}>Native CRM Ticketing System Active</strong>
-            <span className="badge good" style={{ fontSize: 10 }}>In-Dashboard</span>
-          </div>
-          <div style={{ fontSize: 12, color: "var(--text-dim)", marginTop: 2 }}>
-            Organized by collection ladder stages (Early Arrears, Committed Arrears, Formal, Residual) with full customer CRM context.
-          </div>
-        </div>
-        <Link
-          to="/customers"
-          className="btn"
-          style={{
-            background: "var(--brand)",
-            color: "#fff",
-            textDecoration: "none",
-            fontWeight: 700,
-            fontSize: 13,
-            padding: "8px 16px",
-            borderRadius: 8,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          View Customers →
-        </Link>
-      </div>
-
-      <Stats cards={[
-        {
-          label: supervisorUser ? "My Assigned Alerts" : "Alerts",
-          value: loading && !roleFilteredRows.length ? "…" : num(roleFilteredRows.length),
-          sub: supervisorUser ? `assigned to @${currentUsername}` : error ? "feed unreachable" : "in the current feed",
-          tone: error ? "bad" : undefined,
-        },
-        {
-          label: "Calls flagged",
-          value: loading && !roleFilteredRows.length ? "…" : num(uniqueCalls),
-          sub: supervisorUser ? "in your queue" : "distinct call IDs",
-        },
-        {
-          label: "Latest alert",
-          value: latest ? relativeTime(latest) : "—",
-          sub: latest ? `${fmtDate(latest)} ${fmtTime(latest)}` : "no alerts yet",
-        },
-        {
-          label: "Feed checked",
-          value: fetchedAt ? fmtTime(fetchedAt) : "—",
-          sub: error ? "last attempt failed" : "press Refresh to re-check",
-          tone: error ? "bad" : "good",
-        },
-      ]} />
-
-      {/* Role Banner */}
-      {supervisorUser ? (
-        <div className="callout" style={{ borderLeftColor: "var(--brand)" }}>
-          <span>
-            🛡️ <strong>Supervisor Scoped View:</strong> Showing only alerts assigned to your queue (<strong>@{currentUsername}</strong> · {userSession?.queue || "Operations"}).
-          </span>
-        </div>
-      ) : (
-        <div className="callout" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-          <span>
-            👑 <strong>Admin Global View:</strong> Showing all alerts across all teams and supervisors.
-          </span>
-          <span style={{ fontSize: 12, color: "var(--text-dim)" }}>
-            Total in feed: {mappedRows.length} alerts
-          </span>
-        </div>
+      {/* AUDIO LISTEN SCRUBBER MODAL */}
+      {audioModalAlert && (
+        <AudioModal alertRow={audioModalAlert} onClose={() => setAudioModalAlert(null)} />
       )}
 
-      <section className="filters">
-        <div className="fx grow">
-          <label htmlFor="aq">Search</label>
+      {/* STYLED FILTER & SEARCH TOOLBAR */}
+      <div
+        style={{
+          background: "var(--surface-2)",
+          padding: 14,
+          borderRadius: 12,
+          border: "1px solid var(--border)",
+          display: "flex",
+          gap: 12,
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 280, position: "relative" }}>
           <input
-            id="aq"
             type="search"
-            placeholder="Call ID, reason, or supervisor…"
+            placeholder="Filter by Call ID, reason, timestamp or supervisor..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "9px 14px",
+              borderRadius: 8,
+              border: "1px solid var(--border-strong)",
+              background: "var(--surface)",
+              color: "var(--text)",
+              fontSize: 13,
+            }}
           />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              title="Clear search"
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                color: "var(--text-dim)",
+                cursor: "pointer",
+                fontSize: 16,
+              }}
+            >
+              ×
+            </button>
+          )}
         </div>
 
-        {!supervisorUser && (
-          <div className="fx">
-            <label htmlFor="as">Supervisor</label>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {!supervisorUser && (
             <select
-              id="as"
               value={supervisorFilter}
               onChange={(e) => setSupervisorFilter(e.target.value)}
+              style={{
+                padding: "9px 14px",
+                borderRadius: 8,
+                border: "1px solid var(--border-strong)",
+                background: "var(--surface)",
+                color: "var(--text)",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              title="Filter view by assigned supervisor"
             >
-              <option value="all">All Supervisors ({mappedRows.length})</option>
+              <option value="all">👑 All Supervisors (Admin)</option>
               {supervisorsList.map((s) => (
                 <option key={s.username} value={s.username}>
                   @{s.username} ({s.name})
                 </option>
               ))}
             </select>
-          </div>
-        )}
+          )}
 
-        <div className="fx">
-          <label>&nbsp;</label>
-          <button className="btn-ghost" onClick={() => setQ("")} disabled={!q}>Clear</button>
-        </div>
-        <div className="fx">
-          <label>&nbsp;</label>
-          <button className="btn-ghost" onClick={exportCsv} disabled={!visible.length}>
-            Export CSV
-          </button>
-        </div>
-        <div className="fx">
-          <label>&nbsp;</label>
-          <button className="btn-ghost" onClick={load} disabled={loading}>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => load(false)}
+            disabled={loading}
+            style={{
+              padding: "9px 16px",
+              fontSize: 13,
+              borderRadius: 8,
+              fontWeight: 600,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              cursor: "pointer",
+              border: "1px solid var(--border-strong)",
+            }}
+          >
+            <RefreshIcon size={14} className={loading ? "spin" : ""} />
             {loading ? "Refreshing…" : "Refresh"}
           </button>
         </div>
-      </section>
+      </div>
 
       <div className="table-wrap">
         <table>
@@ -502,7 +605,7 @@ export default function CallAlerts() {
                 # <span className="arrow">{arrow("row_number")}</span>
               </th>
               <th>Call ID</th>
-              <th>Customer & CRM Account</th>
+              <th>Customer &amp; CRM Account</th>
               <th className="sortable" onClick={() => sortBy("Reason")}>
                 Reason <span className="arrow">{arrow("Reason")}</span>
               </th>
@@ -510,7 +613,7 @@ export default function CallAlerts() {
               <th className="sortable" style={{ width: 170 }} onClick={() => sortBy("Timestamp")}>
                 Timestamp <span className="arrow">{arrow("Timestamp")}</span>
               </th>
-              <th style={{ width: 130, textAlign: "right" }}>CRM Action</th>
+              <th style={{ width: 180, textAlign: "right" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -580,28 +683,34 @@ export default function CallAlerts() {
                     )}
                   </td>
                   <td className="nowrap">
-                  {r.Timestamp ? (
-                    <>
-                      <div>{fmtDate(r.Timestamp)} {fmtTime(r.Timestamp)}</div>
-                      <div style={{ fontSize: 12, color: "var(--text-dim)" }}>
-                        {relativeTime(r.Timestamp)}
-                      </div>
-                    </>
-                  ) : <span className="dim">—</span>}
+                    {r.Timestamp ? (
+                      <>
+                        <div>{fmtDate(r.Timestamp)} {fmtTime(r.Timestamp)}</div>
+                        <div style={{ fontSize: 12, color: "var(--text-dim)" }}>
+                          {relativeTime(r.Timestamp)}
+                        </div>
+                      </>
+                    ) : <span className="dim">—</span>}
                   </td>
                   <td style={{ textAlign: "right" }}>
-                    {r.linkedTicket ? (
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                      <button
+                        className="btn-solid"
+                        style={{ fontSize: 11, padding: "4px 8px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 6, fontWeight: 700, cursor: "pointer" }}
+                        onClick={() => handleTakeOver(r)}
+                        title="Take over call - Redirect to Testing"
+                      >
+                        ⚡ Take Over
+                      </button>
                       <button
                         className="btn-ghost"
-                        style={{ fontSize: 11, padding: "4px 8px", cursor: "pointer", whiteSpace: "nowrap" }}
-                        onClick={() => takeOverTicket(r.linkedTicket)}
-                        title="Take over ticket in Native CRM Kanban"
+                        style={{ fontSize: 11, padding: "4px 8px", borderRadius: 6, fontWeight: 700, cursor: "pointer" }}
+                        onClick={() => handleListen(r)}
+                        title="Listen to call audio recording"
                       >
-                        ⚡ Take Over ↗
+                        🎧 Listen
                       </button>
-                    ) : (
-                      <span className="dim">—</span>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))

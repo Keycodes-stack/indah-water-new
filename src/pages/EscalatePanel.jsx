@@ -194,6 +194,21 @@ function AudioPlayerBar({ row, getPresignedAudioUrl }) {
   );
 }
 
+function formatTimestamp(row) {
+  const ts = row.call_timestamp || row.created_at || row.date || row.time_stamp;
+  if (!ts) return "Recently";
+  const dateObj = new Date(ts);
+  if (isNaN(dateObj.getTime())) return String(ts);
+  return dateObj.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 export default function EscalatePanel() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -777,12 +792,12 @@ export default function EscalatePanel() {
             <table className="table" style={{ width: "100%", fontSize: 12.5, borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", textAlign: "left", borderBottom: "1px solid var(--border)" }}>
-                  <th style={{ padding: "12px 14px", fontWeight: 700 }}>Customer &amp; Phone</th>
+                  <th style={{ padding: "12px 14px", fontWeight: 700 }}>Call ID &amp; Timestamp</th>
                   <th style={{ padding: "12px 14px", fontWeight: 700 }}>Priority &amp; Intent</th>
                   <th style={{ padding: "12px 14px", fontWeight: 700 }}>Frustration Level</th>
                   <th style={{ padding: "12px 14px", fontWeight: 700 }}>Outcome</th>
                   <th style={{ padding: "12px 14px", fontWeight: 700 }}>Hardship / Situation</th>
-                  <th style={{ padding: "12px 14px", fontWeight: 700, maxWidth: 260 }}>Evidence / Summary</th>
+                  <th style={{ padding: "12px 14px", fontWeight: 700, minWidth: 320, maxWidth: 450 }}>Evidence / Summary</th>
                   <th style={{ padding: "12px 14px", fontWeight: 700 }}>Audio Recording</th>
                   <th style={{ padding: "12px 14px", fontWeight: 700, textAlign: "right" }}>Actions</th>
                 </tr>
@@ -795,21 +810,20 @@ export default function EscalatePanel() {
                   return (
                     <tr
                       key={row.call_id || idx}
+                      onClick={() => openActionModal(row)}
                       style={{
                         borderBottom: "1px solid var(--border)",
                         background: idx % 2 === 0 ? "var(--surface)" : "var(--surface-2)",
+                        cursor: "pointer",
                       }}
                     >
-                      {/* Customer & Phone */}
+                      {/* Call ID & Timestamp */}
                       <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                        <div style={{ fontWeight: 700, color: "var(--text)", fontSize: 13 }}>
-                          {row.customer_name || "Unknown Customer"}
+                        <div style={{ fontWeight: 700, color: "var(--text)", fontSize: 12.5, fontFamily: "var(--mono)" }}>
+                          {(row.call_id || "ID-UNKNOWN").substring(0, 14)}
                         </div>
-                        <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginTop: 2 }}>
-                          📞 {row.customer_phone || "+6012-3456789"}
-                        </div>
-                        <div style={{ fontSize: 10.5, color: "var(--text-faint)", marginTop: 2 }} className="mono">
-                          ID: {(row.call_id || "").substring(0, 10)}
+                        <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginTop: 3 }}>
+                          📅 {formatTimestamp(row)}
                         </div>
                       </td>
 
@@ -852,32 +866,42 @@ export default function EscalatePanel() {
                         </div>
                       </td>
 
-                      {/* Evidence / Summary (Max 2 lines, click to expand) */}
-                      <td style={{ padding: "12px 14px", verticalAlign: "top", maxWidth: 260 }}>
+                      {/* Evidence / Summary (Max 3 lines, click to expand) */}
+                      <td style={{ padding: "12px 14px", verticalAlign: "top", minWidth: 320, maxWidth: 450 }}>
                         <div
-                          onClick={() => setExpandedSummary(isExpanded ? null : (row.call_id || idx))}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedSummary(isExpanded ? null : (row.call_id || idx));
+                          }}
                           title="Click to view full text"
                           style={{
                             fontSize: 11.5,
                             color: "var(--text-dim)",
-                            lineHeight: 1.4,
+                            lineHeight: 1.45,
                             cursor: "pointer",
                             display: "-webkit-box",
-                            WebkitLineClamp: isExpanded ? "none" : 2,
+                            WebkitLineClamp: isExpanded ? "none" : 3,
                             WebkitBoxOrient: "vertical",
                             overflow: "hidden",
+                            background: "var(--surface-2)",
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            border: "1px solid var(--border)",
                           }}
                         >
-                          {row.summary || "No call summary provided."}
+                          "{row.summary || "No call summary provided."}"
                         </div>
                         <span
-                          onClick={() => setExpandedSummary(isExpanded ? null : (row.call_id || idx))}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedSummary(isExpanded ? null : (row.call_id || idx));
+                          }}
                           style={{
                             fontSize: 10.5,
                             color: "#3b82f6",
                             fontWeight: 700,
                             cursor: "pointer",
-                            marginTop: 3,
+                            marginTop: 4,
                             display: "inline-block",
                           }}
                         >
@@ -890,7 +914,10 @@ export default function EscalatePanel() {
                         <button
                           type="button"
                           className="btn-ghost"
-                          onClick={() => setAudioModalRow(row)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAudioModalRow(row);
+                          }}
                           style={{
                             padding: "6px 12px",
                             fontSize: 12,
@@ -916,7 +943,10 @@ export default function EscalatePanel() {
                           <button
                             type="button"
                             className="btn-ghost"
-                            onClick={() => handleQuickDND(row)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickDND(row);
+                            }}
                             title="Directly add lead to DND"
                             style={{
                               padding: "5px 10px",
@@ -933,7 +963,10 @@ export default function EscalatePanel() {
                           <button
                             type="button"
                             className="btn-ghost"
-                            onClick={() => handleQuickCall(row)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickCall(row);
+                            }}
                             title="Direct call customer"
                             style={{
                               padding: "5px 10px",
@@ -950,7 +983,10 @@ export default function EscalatePanel() {
                           <button
                             type="button"
                             className="btn-solid"
-                            onClick={() => openActionModal(row)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openActionModal(row);
+                            }}
                             style={{
                               padding: "5px 12px",
                               fontSize: 11.5,

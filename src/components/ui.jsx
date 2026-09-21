@@ -42,15 +42,20 @@ export function StatCard({ label, value, sub, tone, onClick, explanation }) {
   );
 }
 
-export function Stats({ cards }) {
+export function Stats({ cards, children }) {
   const [activeCard, setActiveCard] = useState(null);
 
+  if (children) {
+    return <section className="stats">{children}</section>;
+  }
+
+  const cardList = Array.isArray(cards) ? cards : [];
   const modalData = activeCard ? getMetricModalData(activeCard) : null;
 
   return (
     <>
       <section className="stats">
-        {cards.map((c) => (
+        {cardList.map((c) => (
           <StatCard
             key={c.label}
             {...c}

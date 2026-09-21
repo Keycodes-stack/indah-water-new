@@ -257,11 +257,27 @@ function AudioPlayerBar({ row, getPresignedAudioUrl }) {
   );
 }
 
+function formatTimestamp(row) {
+  const ts = row.call_timestamp || row.created_at || row.date || row.time_stamp;
+  if (!ts) return "Recently";
+  const dateObj = new Date(ts);
+  if (isNaN(dateObj.getTime())) return String(ts);
+  return dateObj.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 export default function ReviewPanel() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [expandedSummary, setExpandedSummary] = useState(null);
 
   // Filters State
   const [intentFilter, setIntentFilter] = useState("ALL");
@@ -800,18 +816,18 @@ export default function ReviewPanel() {
             <table className="table" style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                  <th style={{ textAlign: "left", padding: "12px 14px" }}>Date &amp; Time</th>
+                  <th style={{ textAlign: "left", padding: "12px 14px" }}>Call ID &amp; Timestamp</th>
                   <th style={{ textAlign: "left", padding: "12px 14px" }}>Customer Name</th>
                   <th style={{ textAlign: "center", padding: "12px 14px" }}>Intent</th>
                   <th style={{ textAlign: "center", padding: "12px 14px" }}>Outcome</th>
                   <th style={{ textAlign: "left", padding: "12px 14px" }}>Situation / Reason</th>
-                  <th style={{ textAlign: "left", padding: "12px 14px" }}>Stated Evidence</th>
+                  <th style={{ textAlign: "left", padding: "12px 14px", minWidth: 320, maxWidth: 450 }}>Stated Evidence</th>
                   <th style={{ textAlign: "center", padding: "12px 14px" }}>Handling</th>
                   <th style={{ textAlign: "center", padding: "12px 14px" }}>Take Action</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredLogs.map((row) => {
+                {filteredLogs.map((row, idx) => {
                   const situationStr = formatSituationText(row.customer_situation);
                   const evidenceStr =
                     row.priority_evidence ||
@@ -819,52 +835,105 @@ export default function ReviewPanel() {
                     row.outcome_evidence ||
                     row.summary ||
                     "—";
+                  const isExpanded = expandedSummary === (row.call_id || idx);
 
                   return (
-                    <tr key={row.call_id} style={{ borderBottom: "1px solid var(--border)" }}>
-                      <td style={{ padding: "12px 14px", color: "var(--text-dim)", whiteSpace: "nowrap" }}>
-                        {row.time_stamp}
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <strong style={{ color: "var(--text)", fontSize: 13.5 }}>{row.customer_name}</strong>
-                        <div style={{ fontSize: 11, color: "var(--text-faint)", fontFamily: "var(--mono)" }}>
-                          {row.call_id.substring(0, 14)}...
+                    <tr
+                      key={row.call_id || idx}
+                      onClick={() => openActionModal(row)}
+                      style={{
+                        borderBottom: "1px solid var(--border)",
+                        background: idx % 2 === 0 ? "var(--surface)" : "var(--surface-2)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {/* Call ID & Timestamp */}
+                      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                        <div style={{ fontWeight: 700, color: "var(--text)", fontSize: 12.5, fontFamily: "var(--mono)" }}>
+                          {(row.call_id || "ID-UNKNOWN").substring(0, 14)}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginTop: 3 }}>
+                          📅 {formatTimestamp(row)}
                         </div>
                       </td>
-                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+
+                      {/* Customer Name */}
+                      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                        <strong style={{ color: "var(--text)", fontSize: 13.5 }}>{row.customer_name || "Unknown Customer"}</strong>
+                        {row.customer_phone && (
+                          <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 2 }}>
+                            📞 {row.customer_phone}
+                          </div>
+                        )}
+                      </td>
+
+                      <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "top" }}>
                         <Badge tone={intentTone(row.customer_intent)}>
                           {row.customer_intent || "UNKNOWN"}
                         </Badge>
                       </td>
-                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                      <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "top" }}>
                         <Badge tone="info">
                           {row.call_outcome ? row.call_outcome.replace(/_/g, " ") : "PROCESSED"}
                         </Badge>
                       </td>
-                      <td style={{ padding: "12px 14px", color: "var(--text-dim)", fontSize: 12.5, fontWeight: 600 }}>
+                      <td style={{ padding: "12px 14px", color: "var(--text-dim)", fontSize: 12.5, fontWeight: 600, verticalAlign: "top" }}>
                         {situationStr}
                       </td>
-                      <td style={{ padding: "12px 14px", color: "var(--text-dim)", fontSize: 12, maxWidth: 260 }}>
+
+                      {/* Stated Evidence (Max 3 lines, click to expand) */}
+                      <td style={{ padding: "12px 14px", color: "var(--text-dim)", fontSize: 12, minWidth: 320, maxWidth: 450, verticalAlign: "top" }}>
                         <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedSummary(isExpanded ? null : (row.call_id || idx));
+                          }}
+                          title="Click to view full text"
                           style={{
                             background: "var(--surface-2)",
-                            padding: "6px 10px",
-                            borderRadius: 6,
+                            padding: "8px 12px",
+                            borderRadius: 8,
                             border: "1px solid var(--border)",
-                            lineHeight: 1.4,
+                            fontSize: 12,
+                            color: "var(--text-dim)",
+                            lineHeight: 1.45,
+                            cursor: "pointer",
+                            display: "-webkit-box",
+                            WebkitLineClamp: isExpanded ? "none" : 3,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
                           }}
                         >
                           "{evidenceStr}"
                         </div>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedSummary(isExpanded ? null : (row.call_id || idx));
+                          }}
+                          style={{
+                            fontSize: 10.5,
+                            color: "#3b82f6",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            marginTop: 4,
+                            display: "inline-block",
+                          }}
+                        >
+                          {isExpanded ? "▲ Collapse text" : "▼ Read full text"}
+                        </span>
                       </td>
-                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                      <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "top" }}>
                         <Badge tone="warn">GREY</Badge>
                       </td>
-                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                      <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "top" }}>
                         <button
                           type="button"
                           className="btn-solid"
-                          onClick={() => openActionModal(row)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openActionModal(row);
+                          }}
                           style={{
                             background: "#10b981",
                             color: "#ffffff",
