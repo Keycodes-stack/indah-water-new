@@ -133,7 +133,7 @@ export default function Customers() {
   }
 
   return (
-    <>
+    <div className="customers-page-container">
       <Stats cards={[
         { label: "Accounts Shown", value: num(filtered.length), sub: `of ${num(customers.length)} on the book` },
         { label: "Value Shown", value: rmCompact(filteredValue), sub: "matching the current filters" },
@@ -358,7 +358,7 @@ export default function Customers() {
           </p>
         </Modal>
       )}
-    </>
+    </div>
   );
 }
 

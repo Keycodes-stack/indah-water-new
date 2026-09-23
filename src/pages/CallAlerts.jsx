@@ -356,9 +356,9 @@ export default function CallAlerts() {
       const alertId = String(alertRow.Call_id || alertRow.row_number || "");
       markAlertAsSeen(alertId);
     }
-    setAudioModalAlert(alertRow || incoming);
     setIncoming(null);
-  }, [incoming, stopTeamsRingtone]);
+    navigate("/testing");
+  }, [navigate, stopTeamsRingtone]);
 
   const handleReject = useCallback((alertRow) => {
     stopTeamsRingtone();
@@ -605,8 +605,7 @@ export default function CallAlerts() {
                 # <span className="arrow">{arrow("row_number")}</span>
               </th>
               <th>Call ID</th>
-              <th>Customer &amp; CRM Account</th>
-              <th className="sortable" onClick={() => sortBy("Reason")}>
+              <th className="sortable" style={{ minWidth: 280, width: "40%" }} onClick={() => sortBy("Reason")}>
                 Reason <span className="arrow">{arrow("Reason")}</span>
               </th>
               <th>Assigned To</th>
@@ -619,7 +618,7 @@ export default function CallAlerts() {
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: "32px 16px", color: "var(--text-dim)" }}>
+                <td colSpan={6} style={{ textAlign: "center", padding: "32px 16px", color: "var(--text-dim)" }}>
                   {supervisorUser
                     ? `No alerts currently assigned to @${currentUsername}.`
                     : "No alerts match your filter criteria."}
@@ -630,29 +629,7 @@ export default function CallAlerts() {
                 <tr key={`${r.Call_id ?? "row"}-${r.row_number ?? i}`}>
                   <td className="num dim">{r.row_number ?? "—"}</td>
                   <td className="mono">{r.Call_id || <span className="dim">—</span>}</td>
-                  <td>
-                    {r.linkedTicket ? (
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>
-                          <Link
-                            to={`/customers?q=${r.linkedTicket.accountNo}`}
-                            style={{ color: "var(--brand)", textDecoration: "none" }}
-                          >
-                            {r.linkedTicket.name}
-                          </Link>
-                        </div>
-                        <div style={{ fontSize: 11, color: "var(--text-dim)", display: "flex", gap: 6, alignItems: "center", marginTop: 2 }}>
-                          <span className="mono">{r.linkedTicket.accountNo}</span>
-                          <span>•</span>
-                          <span style={{ fontWeight: 600, color: "var(--text)" }}>{rm(r.linkedTicket.arrearsAmount)}</span>
-                          <span className="badge info" style={{ fontSize: 10, padding: "0 5px" }}>{r.linkedTicket.stage}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="dim">—</span>
-                    )}
-                  </td>
-                  <td>{r.Reason || <span className="dim">—</span>}</td>
+                  <td style={{ lineHeight: 1.45 }}>{r.Reason || <span className="dim">—</span>}</td>
                   <td>
                     {!supervisorUser ? (
                       <select

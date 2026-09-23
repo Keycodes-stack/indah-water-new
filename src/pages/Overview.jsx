@@ -14,6 +14,8 @@ import {
   DashboardIcon,
   InboxIcon,
   TicketIcon,
+  DollarIcon,
+  TrendingUpIcon,
 } from "../components/icons.jsx";
 
 const WEEKLY_TREND_DATA = [
@@ -106,8 +108,40 @@ const RECENT_FEED = [
   },
 ];
 
+const RECOVERY_DATA = {
+  this_month: {
+    periodLabel: "September 2026 (This Month)",
+    shortLabel: "This Month",
+    totalAmount: "RM 485,250",
+    casesCount: "3,240",
+    targetAchievement: "92.4%",
+    growthRate: "↑ +18.5% vs last month",
+    avgPerCase: "RM 149.76 / case",
+  },
+  this_quarter: {
+    periodLabel: "Q3 2026 (Jul - Sep)",
+    shortLabel: "This Quarter",
+    totalAmount: "RM 1,420,800",
+    casesCount: "9,580",
+    targetAchievement: "94.8%",
+    growthRate: "↑ +22.1% vs Q2 2026",
+    avgPerCase: "RM 148.31 / case",
+  },
+  ytd: {
+    periodLabel: "Year-To-Date (2026)",
+    shortLabel: "YTD 2026",
+    totalAmount: "RM 4,850,600",
+    casesCount: "32,450",
+    targetAchievement: "96.1%",
+    growthRate: "↑ +27.4% vs YTD 2025",
+    avgPerCase: "RM 149.48 / case",
+  },
+};
+
 export default function Overview() {
   const navigate = useNavigate();
+  const [recoveryPeriod, setRecoveryPeriod] = useState("this_month");
+  const currentRecovery = RECOVERY_DATA[recoveryPeriod];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -183,8 +217,68 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Row 1: Primary Metrics Grid (5 Cards) */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 14 }}>
+      {/* Row 1: Primary Metrics Grid (6 Cards) */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+        {/* Dedicated Recovery KPI Tile */}
+        <div
+          style={{
+            background: "var(--surface)",
+            border: "1px solid rgba(16,185,129,0.4)",
+            borderRadius: 14,
+            padding: 16,
+            boxShadow: "0 4px 20px rgba(16,185,129,0.08)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            position: "relative",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 6 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 800, color: "#10b981", textTransform: "uppercase", letterSpacing: 0.5, display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <DollarIcon size={16} /> Total Recovery
+            </span>
+            <select
+              value={recoveryPeriod}
+              onChange={(e) => setRecoveryPeriod(e.target.value)}
+              style={{
+                background: "var(--surface-2)",
+                border: "1px solid var(--border-strong)",
+                color: "var(--text)",
+                borderRadius: 6,
+                padding: "2px 6px",
+                fontSize: 10.5,
+                fontWeight: 700,
+                outline: "none",
+                cursor: "pointer",
+              }}
+            >
+              <option value="this_month">This Month</option>
+              <option value="this_quarter">Q3 2026</option>
+              <option value="ytd">YTD 2026</option>
+            </select>
+          </div>
+
+          <div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: "#10b981", letterSpacing: -0.5 }}>
+              {currentRecovery.totalAmount}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4, flexWrap: "wrap", gap: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>
+                👥 {currentRecovery.casesCount} Recovered Cases
+              </div>
+              <Badge tone="good" style={{ fontSize: 9.5, padding: "2px 6px" }}>
+                {currentRecovery.targetAchievement} Target
+              </Badge>
+            </div>
+          </div>
+
+          <div style={{ fontSize: 10.5, color: "var(--text-dim)", fontWeight: 600, marginTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px dashed var(--border)", paddingTop: 6 }}>
+            <span style={{ color: "#10b981", fontWeight: 700 }}>{currentRecovery.growthRate}</span>
+            <span style={{ color: "var(--text-faint)" }}>Period: {currentRecovery.shortLabel}</span>
+          </div>
+        </div>
+
         {/* Total Customers */}
         <div
           onClick={() => navigate("/customers")}

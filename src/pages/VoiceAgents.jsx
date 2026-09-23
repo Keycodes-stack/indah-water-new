@@ -267,15 +267,187 @@ const DEFAULT_AGENTS = [
   },
 ];
 
+const HISTORY_LOG_DATA = [
+  {
+    id: "HL-9001",
+    agentId: "aina",
+    agentName: "Aina",
+    agentColor: "#10b981",
+    datetime: "2026-09-23 14:32",
+    caller: "Ahmad Razak (+6012-3882910)",
+    accountNo: "IWK-88301",
+    duration: "2m 14s",
+    status: "Completed",
+    outcome: "Promise to Pay",
+    escalation: "None",
+    aiSummary: "Customer acknowledged RM 320 outstanding balance. Agreed to settle by end of month via online banking. Follow-up reminder scheduled for 30 Sep.",
+    hasRecording: true,
+    hasTranscript: true,
+  },
+  {
+    id: "HL-9002",
+    agentId: "hakim",
+    agentName: "Hakim",
+    agentColor: "#0b7fc4",
+    datetime: "2026-09-23 13:58",
+    caller: "TechBuild Sdn Bhd (+603-7921 0088)",
+    accountNo: "IWK-COM-14201",
+    duration: "3m 48s",
+    status: "Escalated",
+    outcome: "Billing Dispute",
+    escalation: "Supervisor",
+    aiSummary: "Commercial account disputes invoice INV-2024-0921. Claims payment was made on 15 Sep via CIMB transfer. Transferred to billing supervisor for manual verification.",
+    hasRecording: true,
+    hasTranscript: true,
+  },
+  {
+    id: "HL-9003",
+    agentId: "aina",
+    agentName: "Aina",
+    agentColor: "#10b981",
+    datetime: "2026-09-23 13:12",
+    caller: "Siti Nurhaliza (+6017-8821940)",
+    accountNo: "IWK-72109",
+    duration: "4m 02s",
+    status: "Completed",
+    outcome: "Instalment Plan Set",
+    escalation: "None",
+    aiSummary: "Customer on 3-month instalment plan. RM 150/month agreed. First payment due 1 Oct. WhatsApp confirmation dispatched post-call.",
+    hasRecording: true,
+    hasTranscript: true,
+  },
+  {
+    id: "HL-9004",
+    agentId: "meiling",
+    agentName: "Mei Ling",
+    agentColor: "#d97706",
+    datetime: "2026-09-23 12:45",
+    caller: "Tan Wei Meng (+6016-4428190)",
+    accountNo: "IWK-94812",
+    duration: "1m 38s",
+    status: "No Answer",
+    outcome: "Unreachable",
+    escalation: "None",
+    aiSummary: "Call connected but no response detected after greeting. Voicemail not available. Flagged for callback attempt.",
+    hasRecording: false,
+    hasTranscript: false,
+  },
+  {
+    id: "HL-9005",
+    agentId: "nur",
+    agentName: "Nur",
+    agentColor: "#dc2626",
+    datetime: "2026-09-23 11:50",
+    caller: "Kavitha Suppiah (+6019-2281049)",
+    accountNo: "IWK-60421",
+    duration: "5m 19s",
+    status: "Completed",
+    outcome: "Hardship Assistance Referred",
+    escalation: "Welfare Desk",
+    aiSummary: "Customer declared income loss due to retrenchment. Referred to BANTU programme. Application form link sent via SMS. Zero-pressure follow-up scheduled in 7 days.",
+    hasRecording: true,
+    hasTranscript: true,
+  },
+  {
+    id: "HL-9006",
+    agentId: "hakim",
+    agentName: "Hakim",
+    agentColor: "#0b7fc4",
+    datetime: "2026-09-23 11:10",
+    caller: "Global Retail Sdn Bhd (+603-8922 4411)",
+    accountNo: "IWK-COM-09872",
+    duration: "2m 52s",
+    status: "Completed",
+    outcome: "Full Payment Confirmed",
+    escalation: "None",
+    aiSummary: "Finance manager confirmed FPX payment reference MY240921-00443. Account cleared. E-receipt to be issued within 2 working days.",
+    hasRecording: true,
+    hasTranscript: true,
+  },
+  {
+    id: "HL-9007",
+    agentId: "priya",
+    agentName: "Priya",
+    agentColor: "#8b5cf6",
+    datetime: "2026-09-23 10:28",
+    caller: "Rajendran Pillai (+6011-7722 4390)",
+    accountNo: "IWK-51234",
+    duration: "3m 05s",
+    status: "Completed",
+    outcome: "Callback Scheduled",
+    escalation: "None",
+    aiSummary: "Customer unavailable to confirm payment immediately. Requested callback on 24 Sep at 2PM. Reminder SMS sent.",
+    hasRecording: true,
+    hasTranscript: false,
+  },
+  {
+    id: "HL-9008",
+    agentId: "aina",
+    agentName: "Aina",
+    agentColor: "#10b981",
+    datetime: "2026-09-23 09:45",
+    caller: "Zulaikha Hassan (+6013-5588 401)",
+    accountNo: "IWK-33870",
+    duration: "1m 52s",
+    status: "Completed",
+    outcome: "Refused Payment",
+    escalation: "Legal Team",
+    aiSummary: "Customer explicitly refused to pay and requested DND. Flagged for legal escalation and put on permanent DND list as per SOP.",
+    hasRecording: true,
+    hasTranscript: true,
+  },
+  {
+    id: "HL-9009",
+    agentId: "meiling",
+    agentName: "Mei Ling",
+    agentColor: "#d97706",
+    datetime: "2026-09-22 16:02",
+    caller: "Lim Beng Huat (+6016-9881 223)",
+    accountNo: "IWK-44821",
+    duration: "2m 40s",
+    status: "Completed",
+    outcome: "Promise to Pay",
+    escalation: "None",
+    aiSummary: "Customer confirmed payment via Touch 'n Go eWallet by 25 Sep. Jompay biller code and reference number shared. Follow-up set.",
+    hasRecording: true,
+    hasTranscript: true,
+  },
+  {
+    id: "HL-9010",
+    agentId: "nur",
+    agentName: "Nur",
+    agentColor: "#dc2626",
+    datetime: "2026-09-22 14:18",
+    caller: "Rokiah Abdullah (+6012-4481 930)",
+    accountNo: "IWK-28801",
+    duration: "6m 11s",
+    status: "Escalated",
+    outcome: "Disputed Bill",
+    escalation: "QA Dept",
+    aiSummary: "Customer disputes bill discrepancy of RM 180 over 2 cycles. Ledger discrepancy referred to QA for itemized review. Customer opted to withhold payment pending resolution.",
+    hasRecording: true,
+    hasTranscript: true,
+  },
+];
+
 export default function VoiceAgents() {
   const [agents, setAgents] = useState(DEFAULT_AGENTS);
   const [activeId, setActiveId] = useState("aina");
-  const [activeTab, setActiveTab] = useState("character"); // 'character' | 'conversation' | 'offers' | 'performance'
+  const [activeTab, setActiveTab] = useState("character"); // 'character' | 'conversation' | 'offers' | 'performance' | 'history'
   const [playingVoiceId, setPlayingVoiceId] = useState(null);
   const [audioPlayer, setAudioPlayer] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [showTalkModal, setShowTalkModal] = useState(false);
   const [showNewModal, setShowNewModal] = useState(false);
+
+  // History Log filter/sort state
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyFilterAgent, setHistoryFilterAgent] = useState("all");
+  const [historyFilterStatus, setHistoryFilterStatus] = useState("all");
+  const [historyFilterEscalation, setHistoryFilterEscalation] = useState("all");
+  const [historySort, setHistorySort] = useState("datetime_desc");
+  const [expandedLogId, setExpandedLogId] = useState(null);
+
 
   // Call simulation state
   const [callState, setCallState] = useState({
@@ -876,6 +1048,7 @@ export default function VoiceAgents() {
               { id: "conversation", label: "Conversation" },
               { id: "offers", label: "Offers & limits" },
               { id: "performance", label: "Performance" },
+              { id: "history", label: "📋 History Log" },
             ].map((tab) => {
               const isSelected = activeTab === tab.id;
               return (
@@ -1304,6 +1477,366 @@ export default function VoiceAgents() {
                   </div>
                 </div>
               )}
+
+              {activeTab === "history" && (() => {
+                // Filter & sort
+                const filtered = HISTORY_LOG_DATA.filter((log) => {
+                  const q = historySearch.toLowerCase();
+                  const matchSearch = !q ||
+                    log.caller.toLowerCase().includes(q) ||
+                    log.accountNo.toLowerCase().includes(q) ||
+                    log.outcome.toLowerCase().includes(q) ||
+                    log.id.toLowerCase().includes(q) ||
+                    log.aiSummary.toLowerCase().includes(q);
+                  const matchAgent = historyFilterAgent === "all" || log.agentId === historyFilterAgent;
+                  const matchStatus = historyFilterStatus === "all" || log.status === historyFilterStatus;
+                  const matchEscalation = historyFilterEscalation === "all" ||
+                    (historyFilterEscalation === "escalated" ? log.escalation !== "None" : log.escalation === "None");
+                  return matchSearch && matchAgent && matchStatus && matchEscalation;
+                }).sort((a, b) => {
+                  if (historySort === "datetime_desc") return b.datetime.localeCompare(a.datetime);
+                  if (historySort === "datetime_asc") return a.datetime.localeCompare(b.datetime);
+                  if (historySort === "duration_desc") return b.duration.localeCompare(a.duration);
+                  if (historySort === "agent") return a.agentName.localeCompare(b.agentName);
+                  return 0;
+                });
+
+                const statusColor = (s) => {
+                  if (s === "Completed") return "#10b981";
+                  if (s === "Escalated") return "#f59e0b";
+                  return "#6b7280";
+                };
+                const escalationColor = (e) => e !== "None" ? "#ef4444" : "#10b981";
+
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {/* Header + Filters Panel */}
+                    <div style={{
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 14,
+                      padding: 16,
+                      boxShadow: "var(--shadow)",
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                        <div>
+                          <strong style={{ fontSize: 15, color: "var(--text)" }}>📋 Call History Log</strong>
+                          <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginTop: 1 }}>
+                            {filtered.length} of {HISTORY_LOG_DATA.length} records · Click a row to expand
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHistorySearch("");
+                            setHistoryFilterAgent("all");
+                            setHistoryFilterStatus("all");
+                            setHistoryFilterEscalation("all");
+                            setHistorySort("datetime_desc");
+                          }}
+                          style={{
+                            background: "var(--surface-2)",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-dim)",
+                            borderRadius: 7,
+                            padding: "5px 12px",
+                            fontSize: 11.5,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          ↺ Reset
+                        </button>
+                      </div>
+
+                      {/* Search + Filters */}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        <input
+                          type="text"
+                          placeholder="🔍 Search caller, account, outcome, summary..."
+                          value={historySearch}
+                          onChange={(e) => setHistorySearch(e.target.value)}
+                          style={{
+                            flex: "1 1 200px",
+                            padding: "7px 11px",
+                            borderRadius: 8,
+                            border: "1px solid var(--border-strong)",
+                            background: "var(--surface-2)",
+                            color: "var(--text)",
+                            fontSize: 12.5,
+                            outline: "none",
+                          }}
+                        />
+                        <select
+                          value={historyFilterAgent}
+                          onChange={(e) => setHistoryFilterAgent(e.target.value)}
+                          style={{ padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 12, fontWeight: 600, outline: "none" }}
+                        >
+                          <option value="all">All Agents</option>
+                          <option value="aina">Aina</option>
+                          <option value="hakim">Hakim</option>
+                          <option value="meiling">Mei Ling</option>
+                          <option value="priya">Priya</option>
+                          <option value="nur">Nur</option>
+                        </select>
+                        <select
+                          value={historyFilterStatus}
+                          onChange={(e) => setHistoryFilterStatus(e.target.value)}
+                          style={{ padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 12, fontWeight: 600, outline: "none" }}
+                        >
+                          <option value="all">All Statuses</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Escalated">Escalated</option>
+                          <option value="No Answer">No Answer</option>
+                        </select>
+                        <select
+                          value={historyFilterEscalation}
+                          onChange={(e) => setHistoryFilterEscalation(e.target.value)}
+                          style={{ padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 12, fontWeight: 600, outline: "none" }}
+                        >
+                          <option value="all">All Escalations</option>
+                          <option value="escalated">Escalated Only</option>
+                          <option value="none">No Escalation</option>
+                        </select>
+                        <select
+                          value={historySort}
+                          onChange={(e) => setHistorySort(e.target.value)}
+                          style={{ padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 12, fontWeight: 600, outline: "none" }}
+                        >
+                          <option value="datetime_desc">↓ Newest First</option>
+                          <option value="datetime_asc">↑ Oldest First</option>
+                          <option value="duration_desc">Duration (Long→Short)</option>
+                          <option value="agent">Agent A→Z</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Log Records */}
+                    {filtered.length === 0 ? (
+                      <div style={{
+                        textAlign: "center",
+                        padding: "36px 20px",
+                        color: "var(--text-dim)",
+                        fontSize: 13,
+                        background: "var(--surface)",
+                        borderRadius: 14,
+                        border: "1px solid var(--border)",
+                      }}>
+                        No interaction records match the current filters.
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {filtered.map((log) => {
+                          const isExpanded = expandedLogId === log.id;
+                          return (
+                            <div
+                              key={log.id}
+                              style={{
+                                background: "var(--surface)",
+                                border: isExpanded ? `1.5px solid ${log.agentColor}66` : "1px solid var(--border)",
+                                borderRadius: 12,
+                                overflow: "hidden",
+                                boxShadow: isExpanded ? `0 4px 20px ${log.agentColor}20` : "var(--shadow)",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              {/* Summary Row */}
+                              <div
+                                onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "72px 140px 1fr 72px 90px 110px 80px 28px",
+                                  gap: 8,
+                                  alignItems: "center",
+                                  padding: "10px 14px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {/* Log ID */}
+                                <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--text-faint)", fontFamily: "monospace" }}>{log.id}</div>
+
+                                {/* Agent */}
+                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  <div style={{
+                                    width: 24, height: 24, borderRadius: "50%",
+                                    background: log.agentColor + "20",
+                                    border: `1.5px solid ${log.agentColor}55`,
+                                    color: log.agentColor,
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: 9, fontWeight: 800, flexShrink: 0,
+                                  }}>
+                                    {log.agentName[0]}
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text)" }}>{log.agentName}</div>
+                                    <div style={{ fontSize: 9.5, color: "var(--text-dim)" }}>{log.datetime}</div>
+                                  </div>
+                                </div>
+
+                                {/* Caller */}
+                                <div style={{ overflow: "hidden" }}>
+                                  <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{log.caller}</div>
+                                  <div style={{ fontSize: 9.5, color: "var(--brand)", fontWeight: 600 }}>{log.accountNo}</div>
+                                </div>
+
+                                {/* Duration */}
+                                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-dim)", textAlign: "center" }}>⏱ {log.duration}</div>
+
+                                {/* Status */}
+                                <div style={{ textAlign: "center" }}>
+                                  <span style={{
+                                    background: statusColor(log.status) + "18",
+                                    color: statusColor(log.status),
+                                    border: `1px solid ${statusColor(log.status)}35`,
+                                    borderRadius: 6,
+                                    padding: "2px 7px",
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    whiteSpace: "nowrap",
+                                  }}>
+                                    {log.status}
+                                  </span>
+                                </div>
+
+                                {/* Outcome */}
+                                <div style={{ fontSize: 10.5, color: "var(--text-dim)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.outcome}</div>
+
+                                {/* Escalation */}
+                                <div style={{ textAlign: "center" }}>
+                                  <span style={{
+                                    background: escalationColor(log.escalation) + "15",
+                                    color: escalationColor(log.escalation),
+                                    border: `1px solid ${escalationColor(log.escalation)}30`,
+                                    borderRadius: 6,
+                                    padding: "2px 6px",
+                                    fontSize: 9.5,
+                                    fontWeight: 700,
+                                    whiteSpace: "nowrap",
+                                  }}>
+                                    {log.escalation === "None" ? "✓ None" : `⚠ ${log.escalation}`}
+                                  </span>
+                                </div>
+
+                                {/* Chevron */}
+                                <div style={{ fontSize: 11, color: "var(--text-dim)", textAlign: "right" }}>{isExpanded ? "▲" : "▼"}</div>
+                              </div>
+
+                              {/* Expanded Detail Panel */}
+                              {isExpanded && (
+                                <div style={{
+                                  borderTop: "1px solid var(--border)",
+                                  padding: "14px 16px",
+                                  background: "var(--surface-2)",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 12,
+                                }}>
+                                  {/* AI Summary */}
+                                  <div>
+                                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+                                      🤖 AI Call Summary
+                                    </div>
+                                    <div style={{
+                                      fontSize: 12.5,
+                                      color: "var(--text)",
+                                      lineHeight: 1.6,
+                                      background: "var(--surface)",
+                                      border: "1px solid var(--border)",
+                                      borderRadius: 8,
+                                      padding: "10px 13px",
+                                    }}>
+                                      {log.aiSummary}
+                                    </div>
+                                  </div>
+
+                                  {/* Detail chips */}
+                                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
+                                    {[
+                                      { label: "Agent", value: log.agentName, color: log.agentColor },
+                                      { label: "Date & Time", value: log.datetime },
+                                      { label: "Caller", value: log.caller },
+                                      { label: "Account No.", value: log.accountNo, color: "var(--brand)" },
+                                      { label: "Duration", value: log.duration },
+                                      { label: "Outcome", value: log.outcome },
+                                      { label: "Call Status", value: log.status, color: statusColor(log.status) },
+                                      { label: "Escalation", value: log.escalation, color: escalationColor(log.escalation) },
+                                    ].map((item) => (
+                                      <div key={item.label} style={{
+                                        background: "var(--surface)",
+                                        border: "1px solid var(--border)",
+                                        borderRadius: 8,
+                                        padding: "8px 11px",
+                                      }}>
+                                        <div style={{ fontSize: 9.5, color: "var(--text-dim)", fontWeight: 700, textTransform: "uppercase", marginBottom: 2 }}>{item.label}</div>
+                                        <div style={{ fontSize: 12, fontWeight: 700, color: item.color || "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.value}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Recording / Transcript / Export actions */}
+                                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                    <button
+                                      type="button"
+                                      disabled={!log.hasRecording}
+                                      onClick={() => log.hasRecording && alert(`Playing recording for ${log.id}`)}
+                                      style={{
+                                        display: "inline-flex", alignItems: "center", gap: 6,
+                                        padding: "7px 14px", borderRadius: 8,
+                                        border: log.hasRecording ? "1px solid rgba(59,130,246,0.4)" : "1px solid var(--border)",
+                                        background: log.hasRecording ? "rgba(59,130,246,0.08)" : "var(--surface)",
+                                        color: log.hasRecording ? "#3b82f6" : "var(--text-dim)",
+                                        fontWeight: 700, fontSize: 12,
+                                        cursor: log.hasRecording ? "pointer" : "not-allowed",
+                                        opacity: log.hasRecording ? 1 : 0.45,
+                                      }}
+                                    >
+                                      🎙 {log.hasRecording ? "Play Recording" : "No Recording"}
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      disabled={!log.hasTranscript}
+                                      onClick={() => log.hasTranscript && alert(`Opening transcript for ${log.id}`)}
+                                      style={{
+                                        display: "inline-flex", alignItems: "center", gap: 6,
+                                        padding: "7px 14px", borderRadius: 8,
+                                        border: log.hasTranscript ? "1px solid rgba(139,92,246,0.4)" : "1px solid var(--border)",
+                                        background: log.hasTranscript ? "rgba(139,92,246,0.08)" : "var(--surface)",
+                                        color: log.hasTranscript ? "#8b5cf6" : "var(--text-dim)",
+                                        fontWeight: 700, fontSize: 12,
+                                        cursor: log.hasTranscript ? "pointer" : "not-allowed",
+                                        opacity: log.hasTranscript ? 1 : 0.45,
+                                      }}
+                                    >
+                                      📄 {log.hasTranscript ? "View Transcript" : "No Transcript"}
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => alert(`Exporting log ${log.id}`)}
+                                      style={{
+                                        display: "inline-flex", alignItems: "center", gap: 6,
+                                        padding: "7px 14px", borderRadius: 8,
+                                        border: "1px solid var(--border)",
+                                        background: "var(--surface)",
+                                        color: "var(--text-dim)",
+                                        fontWeight: 700, fontSize: 12,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      ⬇ Export Log
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Right Box: Live Sample Conversation Preview */}

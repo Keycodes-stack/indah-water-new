@@ -3,8 +3,8 @@ import { PhoneCallIcon } from "../components/icons.jsx";
 const AGENTS = [
   {
     id: "aina-en",
-    name: "Aina (English)",
-    language: "English",
+    name: "Aina (Manglish)",
+    language: "Manglish",
     number: "+13469986661",
     formattedNumber: "+1 (346) 998-6661",
     color: "#10b981", // Emerald Green
