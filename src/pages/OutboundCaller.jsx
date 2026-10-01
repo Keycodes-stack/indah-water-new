@@ -144,7 +144,7 @@ export default function OutboundCaller() {
   }, [leads, search, statusFilter]);
 
   const handleCallClick = (lead) => {
-    navigate("/testing");
+    navigate("/testing", { state: { lead } });
   };
 
   const proceedToVapi = () => {
