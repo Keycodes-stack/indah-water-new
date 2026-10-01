@@ -13,6 +13,8 @@ export const CONFIG = {
     secretKey: "e71a863d-db51-4a9a-8f6d-8099f13bd4d4",
     publicKey: "4440b6a1-4ea4-47ab-a837-7d623172b038",
     assistantId: "59567db0-c442-4ddf-b34a-cefa922bdca7",
+    phoneNumberId: "49ae476e-9bd2-4749-8d39-b56cdd04f266",
+    callerNumber: "+60 3-6043 2495",
     baseUrl: "https://api.vapi.ai",
   },
 
