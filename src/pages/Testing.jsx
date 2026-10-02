@@ -14,6 +14,10 @@ const AGENTS = [
     assistantId: CONFIG.vapi.assistantId,
     color: "#10b981", // Emerald Green
     description: "Courteous Careline tone, bilingual English & Malay mix.",
+    voices: CONFIG.vapi.voices?.manglish || [
+      { id: "WpOPmlCUjY3kjHR7RaRi", label: "Voice 1", provider: "11labs", model: "eleven_turbo_v2_5" },
+      { id: "2k8RkyGz6ut0S9Qq5upN", label: "Voice 2", provider: "11labs", model: "eleven_turbo_v2_5" },
+    ],
   },
   {
     id: "aina-my",
@@ -24,6 +28,10 @@ const AGENTS = [
     assistantId: CONFIG.vapi.assistantMalayId || "9352cbc1-be19-4f45-9af4-e5980bb9f5de",
     color: "#0b7fc4", // IWK Blue
     description: "Natural formal & colloquial Malaysian Malay recovery agent.",
+    voices: CONFIG.vapi.voices?.malay || [
+      { id: "w2dXNwje6o73fWGIO6CD", label: "Voice 1", provider: "11labs", model: "eleven_multilingual_v2" },
+      { id: "kXQ1ZZosnfmkUToBIGhN", label: "Voice 2", provider: "11labs", model: "eleven_multilingual_v2" },
+    ],
   },
 ];
 
@@ -32,6 +40,11 @@ export default function Testing() {
   const selectedLead = location.state?.lead || null;
 
   const [activeAgentId, setActiveAgentId] = useState(null);
+  const [selectedVoiceIds, setSelectedVoiceIds] = useState({
+    "aina-en": "WpOPmlCUjY3kjHR7RaRi",
+    "aina-my": "w2dXNwje6o73fWGIO6CD",
+  });
+  const [customVoiceInputs, setCustomVoiceInputs] = useState({});
   const [callStatus, setCallStatus] = useState("idle"); // 'idle' | 'connecting' | 'active' | 'ended' | 'error'
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -121,7 +134,22 @@ export default function Testing() {
         if (timerRef.current) clearInterval(timerRef.current);
       });
 
-      vapi.start(agent.assistantId || CONFIG.vapi.assistantId).catch((err) => {
+      // Prepare assistant voice override if selected
+      const chosenVoiceId = selectedVoiceIds[agent.id] || customVoiceInputs[agent.id];
+      const chosenVoiceObj = agent.voices?.find((v) => v.id === chosenVoiceId);
+
+      let assistantOverrides = undefined;
+      if (chosenVoiceId) {
+        assistantOverrides = {
+          voice: {
+            provider: chosenVoiceObj?.provider || "11labs",
+            voiceId: chosenVoiceId,
+            model: chosenVoiceObj?.model || "eleven_turbo_v2_5",
+          },
+        };
+      }
+
+      vapi.start(agent.assistantId || CONFIG.vapi.assistantId, assistantOverrides).catch((err) => {
         console.error("Vapi Start Error:", err);
         setErrorMessage(err?.message || "Microphone permission denied or connection issue");
         setCallStatus("error");
@@ -326,6 +354,63 @@ export default function Testing() {
               >
                 {agent.formattedNumber}
               </div>
+
+              {/* Dynamic Voice Option Selector */}
+              {agent.voices && agent.voices.length > 0 && (
+                <div
+                  style={{
+                    width: "100%",
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 12,
+                    padding: "12px 14px",
+                    marginBottom: 16,
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                      🎙️ Select Voice Model ({agent.voices.length} Options)
+                    </span>
+                  </div>
+
+                  <select
+                    value={selectedVoiceIds[agent.id] || agent.voices[0]?.id}
+                    onChange={(e) =>
+                      setSelectedVoiceIds((prev) => ({
+                        ...prev,
+                        [agent.id]: e.target.value,
+                      }))
+                    }
+                    disabled={isLive || isConnecting}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border-strong)",
+                      background: "var(--surface)",
+                      color: "var(--text)",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      cursor: isLive || isConnecting ? "not-allowed" : "pointer",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {agent.voices.map((v, idx) => (
+                      <option key={v.id} value={v.id}>
+                        {v.label || `Option ${idx + 1}: ${v.id}`}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div style={{ fontSize: 11, color: "var(--text-dim)", display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                    <span>Active Voice ID:</span>
+                    <code style={{ fontSize: 10.5, color: agent.color, fontWeight: 700 }}>
+                      {selectedVoiceIds[agent.id] || agent.voices[0]?.id}
+                    </code>
+                  </div>
+                </div>
+              )}
 
               {/* Live Status Message & Timer */}
               {isLive && (
