@@ -17,6 +17,36 @@ export const CONFIG = {
     phoneNumberId: "49ae476e-9bd2-4749-8d39-b56cdd04f266",
     callerNumber: "+60 3-6043 2495",
     baseUrl: "https://api.vapi.ai",
+    voices: {
+      manglish: [
+        {
+          id: "WpOPmlCUjY3kjHR7RaRi",
+          label: "Voice 1",
+          provider: "11labs",
+          model: "eleven_turbo_v2_5",
+        },
+        {
+          id: "2k8RkyGz6ut0S9Qq5upN",
+          label: "Voice 2",
+          provider: "11labs",
+          model: "eleven_turbo_v2_5",
+        },
+      ],
+      malay: [
+        {
+          id: "w2dXNwje6o73fWGIO6CD",
+          label: "Voice 1",
+          provider: "11labs",
+          model: "eleven_multilingual_v2",
+        },
+        {
+          id: "kXQ1ZZosnfmkUToBIGhN",
+          label: "Voice 2",
+          provider: "11labs",
+          model: "eleven_multilingual_v2",
+        },
+      ],
+    },
   },
 
   // --- Call Alerts & Telemetry Webhooks (n8n) ---------------
