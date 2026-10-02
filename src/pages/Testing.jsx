@@ -21,7 +21,7 @@ const AGENTS = [
     language: "Bahasa Melayu (Malay)",
     number: CONFIG.vapi.callerNumber || "+60 3-6043 2495",
     formattedNumber: CONFIG.vapi.callerNumber || "+60 3-6043 2495",
-    assistantId: CONFIG.vapi.assistantId,
+    assistantId: CONFIG.vapi.assistantMalayId || "9352cbc1-be19-4f45-9af4-e5980bb9f5de",
     color: "#0b7fc4", // IWK Blue
     description: "Natural formal & colloquial Malaysian Malay recovery agent.",
   },
