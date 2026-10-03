@@ -15,7 +15,7 @@ const AGENTS = [
     color: "#10b981", // Emerald Green
     description: "Courteous Careline tone, bilingual English & Malay mix.",
     voices: CONFIG.vapi.voices?.manglish || [
-      { id: "WpOPmlCUjY3kjHR7RaRi", label: "Voice 1", provider: "11labs", model: "eleven_turbo_v2_5" },
+      { id: "D1360BR3zCp9v0EXUpO4", label: "Voice 1", provider: "11labs", model: "eleven_v3" },
       { id: "2k8RkyGz6ut0S9Qq5upN", label: "Voice 2", provider: "11labs", model: "eleven_turbo_v2_5" },
     ],
   },
@@ -41,7 +41,7 @@ export default function Testing() {
 
   const [activeAgentId, setActiveAgentId] = useState(null);
   const [selectedVoiceIds, setSelectedVoiceIds] = useState({
-    "aina-en": "WpOPmlCUjY3kjHR7RaRi",
+    "aina-en": "D1360BR3zCp9v0EXUpO4",
     "aina-my": "w2dXNwje6o73fWGIO6CD",
   });
   const [customVoiceInputs, setCustomVoiceInputs] = useState({});
@@ -129,7 +129,12 @@ export default function Testing() {
 
       vapi.on("error", (e) => {
         console.error("Voice AI Call Error:", e);
-        setErrorMessage(e?.message || "Failed to establish voice connection");
+        const msg =
+          e?.error?.message ||
+          e?.message ||
+          e?.error ||
+          "Failed to establish voice connection";
+        setErrorMessage(typeof msg === "object" ? JSON.stringify(msg) : msg);
         setCallStatus("error");
         if (timerRef.current) clearInterval(timerRef.current);
       });
@@ -151,7 +156,12 @@ export default function Testing() {
 
       vapi.start(agent.assistantId || CONFIG.vapi.assistantId, assistantOverrides).catch((err) => {
         console.error("Vapi Start Error:", err);
-        setErrorMessage(err?.message || "Microphone permission denied or connection issue");
+        const msg =
+          err?.error?.message ||
+          err?.message ||
+          err?.error ||
+          "Microphone permission denied or connection issue";
+        setErrorMessage(typeof msg === "object" ? JSON.stringify(msg) : msg);
         setCallStatus("error");
       });
     } catch (err) {
@@ -216,7 +226,7 @@ export default function Testing() {
                 fontSize: 16,
               }}
             >
-              👤
+              
             </div>
             <div>
               <div style={{ fontSize: 12, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: 0.5 }}>
@@ -370,7 +380,7 @@ export default function Testing() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: 0.4 }}>
-                      🎙️ Select Voice Model ({agent.voices.length} Options)
+                      Select Voice Model ({agent.voices.length} Options)
                     </span>
                   </div>
 
@@ -445,13 +455,13 @@ export default function Testing() {
 
               {isConnecting && (
                 <div style={{ marginBottom: 16, color: "var(--warning)", fontWeight: 600, fontSize: 13 }}>
-                  ⏳ Connecting to Voice AI...
+                  Connecting to Voice AI...
                 </div>
               )}
 
               {hasError && (
                 <div style={{ marginBottom: 16, color: "var(--danger, #ef4444)", fontSize: 12.5, fontWeight: 500 }}>
-                  ⚠️ {errorMessage}
+                  {errorMessage}
                 </div>
               )}
 
@@ -513,7 +523,7 @@ export default function Testing() {
                         color: isMuted ? "#f59e0b" : undefined,
                       }}
                     >
-                      {isMuted ? "🔇 Unmute" : "🎤 Mute"}
+                      {isMuted ? "Unmute" : "Mute"}
                     </button>
                     <button
                       onClick={handleEndCall}
@@ -530,7 +540,7 @@ export default function Testing() {
                         boxShadow: "0 4px 14px rgba(239, 68, 68, 0.35)",
                       }}
                     >
-                      🛑 End Call
+                      End Call
                     </button>
                   </>
                 ) : isConnecting ? (
