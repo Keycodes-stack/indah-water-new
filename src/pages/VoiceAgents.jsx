@@ -699,7 +699,7 @@ export default function VoiceAgents() {
             gap: 8,
           }}
         >
-          <span>✓</span>
+          <span>OK</span>
           <span>{toastMessage}</span>
         </div>
       )}
@@ -883,7 +883,7 @@ export default function VoiceAgents() {
               border: "1px solid var(--border)",
             }}
           >
-            💡 <strong>Journeys pick an agent by role and language.</strong> A Mandarin-flagged account gets Mei Ling; a BANTU reply gets Nur.
+            <strong>Journeys pick an agent by role and language.</strong> A Mandarin-flagged account gets Mei Ling; a BANTU reply gets Nur.
           </div>
         </div>
 
@@ -977,7 +977,7 @@ export default function VoiceAgents() {
                   }}
                   onClick={startTestCall}
                 >
-                  <span>📞</span> Talk to {activeAgent.name}
+                  Talk to {activeAgent.name}
                 </button>
                 <button
                   className="btn-ghost"
@@ -1048,7 +1048,7 @@ export default function VoiceAgents() {
               { id: "conversation", label: "Conversation" },
               { id: "offers", label: "Offers & limits" },
               { id: "performance", label: "Performance" },
-              { id: "history", label: "📋 History Log" },
+              { id: "history", label: "History Log" },
             ].map((tab) => {
               const isSelected = activeTab === tab.id;
               return (
@@ -1174,7 +1174,7 @@ export default function VoiceAgents() {
                                 }}
                                 title="Play voice sample MP3"
                               >
-                                {isPlaying ? "⏸" : "▶"}
+                                {isPlaying ? "Pause" : "Play"}
                               </button>
                               <div>
                                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -1520,7 +1520,7 @@ export default function VoiceAgents() {
                     }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
                         <div>
-                          <strong style={{ fontSize: 15, color: "var(--text)" }}>📋 Call History Log</strong>
+                          <strong style={{ fontSize: 15, color: "var(--text)" }}>Call History Log</strong>
                           <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginTop: 1 }}>
                             {filtered.length} of {HISTORY_LOG_DATA.length} records · Click a row to expand
                           </div>
@@ -1553,7 +1553,7 @@ export default function VoiceAgents() {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                         <input
                           type="text"
-                          placeholder="🔍 Search caller, account, outcome, summary..."
+                          placeholder="Search caller, account, outcome, summary..."
                           value={historySearch}
                           onChange={(e) => setHistorySearch(e.target.value)}
                           style={{
@@ -1680,7 +1680,7 @@ export default function VoiceAgents() {
                                 </div>
 
                                 {/* Duration */}
-                                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-dim)", textAlign: "center" }}>⏱ {log.duration}</div>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-dim)", textAlign: "center" }}>{log.duration}</div>
 
                                 {/* Status */}
                                 <div style={{ textAlign: "center" }}>
@@ -1713,7 +1713,7 @@ export default function VoiceAgents() {
                                     fontWeight: 700,
                                     whiteSpace: "nowrap",
                                   }}>
-                                    {log.escalation === "None" ? "✓ None" : `⚠ ${log.escalation}`}
+                                    {log.escalation === "None" ? "None" : `${log.escalation}`}
                                   </span>
                                 </div>
 
@@ -1734,7 +1734,7 @@ export default function VoiceAgents() {
                                   {/* AI Summary */}
                                   <div>
                                     <div style={{ fontSize: 10.5, fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
-                                      🤖 AI Call Summary
+                                      AI Call Summary
                                     </div>
                                     <div style={{
                                       fontSize: 12.5,
@@ -1790,7 +1790,7 @@ export default function VoiceAgents() {
                                         opacity: log.hasRecording ? 1 : 0.45,
                                       }}
                                     >
-                                      🎙 {log.hasRecording ? "Play Recording" : "No Recording"}
+                                      {log.hasRecording ? "Play Recording" : "No Recording"}
                                     </button>
 
                                     <button
@@ -1808,7 +1808,7 @@ export default function VoiceAgents() {
                                         opacity: log.hasTranscript ? 1 : 0.45,
                                       }}
                                     >
-                                      📄 {log.hasTranscript ? "View Transcript" : "No Transcript"}
+                                      {log.hasTranscript ? "View Transcript" : "No Transcript"}
                                     </button>
 
                                     <button
@@ -1999,7 +1999,7 @@ export default function VoiceAgents() {
                 className="btn-ghost"
                 onClick={() => setCallState((s) => ({ ...s, muted: !s.muted }))}
               >
-                {callState.muted ? "🔇 Unmute Mic" : "🎙 Mute Mic"}
+                {callState.muted ? "Unmute Mic" : "Mute Mic"}
               </button>
               <button
                 className="btn-solid"
