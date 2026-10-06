@@ -70,6 +70,48 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
+// Endpoint: Send Real Twilio SMS (Backend Proxy to bypass Browser CORS)
+app.post('/api/send-sms', async (req, res) => {
+  try {
+    const { to, body, accountSid, authToken, fromNumber } = req.body;
+    const sid = (accountSid || 'AC4dd107dc736942e0474eb7e23e16e244').trim();
+    const token = (authToken || 'e3bd880d4fee76e35a08d9c1c01a22f7').trim();
+    const from = (fromNumber || '+19854652238').trim();
+
+    if (!to || !body) {
+      return res.status(400).json({ error: "Missing 'to' or 'body'" });
+    }
+
+    const cleanTo = to.replace(/\s+/g, '').replace(/-/g, '');
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`;
+    const params = new URLSearchParams();
+    params.append('To', cleanTo);
+    params.append('From', from);
+    params.append('Body', body);
+
+    const authHeader = 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64');
+    const twilioRes = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+
+    const data = await twilioRes.json();
+    if (!twilioRes.ok) {
+      console.error('[TWILIO ERROR]', data.message || data);
+      return res.status(twilioRes.status).json({ error: data.message || 'Twilio dispatch failed' });
+    }
+    console.log(`[TWILIO SMS] Dispatched to ${cleanTo}, SID: ${data.sid}`);
+    return res.json({ success: true, sid: data.sid, to: cleanTo });
+  } catch (err) {
+    console.error('[TWILIO EXCEPTION]', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── IMAP Config with longer timeouts ──────────────────────────────────────
 const IMAP_CONFIG = {
   imap: {

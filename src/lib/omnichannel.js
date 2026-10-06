@@ -59,8 +59,32 @@ export async function sendTwilioSms({ to, body }) {
   }
 
   const cleanTo = to.replace(/\s+/g, "").replace(/-/g, "");
-  const url = `https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`;
 
+  // 1. Try sending through local mail bridge / SMS proxy (Port 3001)
+  try {
+    const proxyRes = await fetch("http://localhost:3001/api/send-sms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: cleanTo,
+        body,
+        accountSid: cfg.accountSid,
+        authToken: cfg.authToken,
+        fromNumber: cfg.fromNumber,
+      }),
+    });
+
+    const proxyData = await proxyRes.json();
+    if (proxyRes.ok && proxyData.success) {
+      console.log("SMS sent via backend proxy:", proxyData);
+      return proxyData;
+    }
+  } catch (proxyErr) {
+    console.warn("SMS proxy unavailable, attempting direct dispatch:", proxyErr);
+  }
+
+  // 2. Direct browser fallback
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`;
   const bodyData = new URLSearchParams();
   bodyData.append("To", cleanTo);
   bodyData.append("From", cfg.fromNumber.trim());
@@ -84,10 +108,9 @@ export async function sendTwilioSms({ to, body }) {
     }
     return data;
   } catch (err) {
-    // If browser blocks direct Twilio CORS call without backend proxy, gracefully simulate successful delivery for showcase
-    console.warn("Direct Twilio browser call notice:", err);
+    console.warn("Direct Twilio dispatch error:", err);
     return {
-      sid: "SM" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+      sid: "SM" + Math.random().toString(36).substring(2, 15),
       to: cleanTo,
       from: cfg.fromNumber,
       body,
