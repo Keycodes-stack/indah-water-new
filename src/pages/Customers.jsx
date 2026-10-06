@@ -158,7 +158,7 @@ export default function Customers() {
       {(category || stage || segment || area || routing) && (
         <div className="active-chart-filter-chip">
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <span>⚡ <strong>Filtered From Chart:</strong></span>
+            <span><strong>Filtered From Chart:</strong></span>
             {category && <span className="chart-filter-tag">Category: <strong>{category}</strong></span>}
             {stage && <span className="chart-filter-tag">Stage: <strong>{stage}</strong></span>}
             {segment && <span className="chart-filter-tag">Segment: <strong>{segment}</strong></span>}
