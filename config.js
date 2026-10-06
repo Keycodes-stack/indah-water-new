@@ -20,7 +20,7 @@ export const CONFIG = {
     voices: {
       manglish: [
         {
-          id: "D1360BR3zCp9v0EXUpO4",
+          id: "2LyhoWYWTvmqt5r3iFg4",
           label: "Voice 1",
           provider: "11labs",
           model: "eleven_v3",
