@@ -15,7 +15,7 @@ const AGENTS = [
     color: "#10b981", // Emerald Green
     description: "Courteous Careline tone, bilingual English & Malay mix.",
     voices: CONFIG.vapi.voices?.manglish || [
-      { id: "D1360BR3zCp9v0EXUpO4", label: "Voice 1", provider: "11labs", model: "eleven_v3" },
+      { id: "2LyhoWYWTvmqt5r3iFg4", label: "Voice 1", provider: "11labs", model: "eleven_v3" },
       { id: "2k8RkyGz6ut0S9Qq5upN", label: "Voice 2", provider: "11labs", model: "eleven_turbo_v2_5" },
     ],
   },
@@ -41,7 +41,7 @@ export default function Testing() {
 
   const [activeAgentId, setActiveAgentId] = useState(null);
   const [selectedVoiceIds, setSelectedVoiceIds] = useState({
-    "aina-en": "D1360BR3zCp9v0EXUpO4",
+    "aina-en": "2LyhoWYWTvmqt5r3iFg4",
     "aina-my": "w2dXNwje6o73fWGIO6CD",
   });
   const [customVoiceInputs, setCustomVoiceInputs] = useState({});
