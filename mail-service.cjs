@@ -185,8 +185,8 @@ const IMAP_CONFIG = {
 
 // Reads the newest inbound customer emails. `holder.connection` lets the caller close the
 // IMAP connection if the deadline passes first.
-async function readInbox(holder) {
-    const pending = imaps.connect(IMAP_CONFIG);
+async function readInbox(holder, cfg = IMAP_CONFIG) {
+    const pending = imaps.connect(cfg);
     holder.pending = pending; // lets the caller close it even if the deadline passes mid-connect
     const connection = await pending;
     holder.connection = connection;
@@ -299,23 +299,26 @@ function closeImap(conn) {
   try { conn.imap && conn.imap.destroy(); } catch (_) {}
 }
 
-// Endpoint: Fetch Real Inbound Emails sent to coutomerr@gmail.com
-app.get('/api/fetch-inbound-emails', async (req, res) => {
+// Loads the newest inbound customer emails. Used by the /api route and by the Netlify background function.
+//   deadlineMs — give up (empty list + reason) after this long
+//   slow       — long IMAP timeouts; only for the background function (a web request must stay short)
+async function loadInbox({ deadlineMs = IMAP_DEADLINE_MS, slow = false } = {}) {
   if (Date.now() < inboxCooldownUntil) {
-    return res.json({ success: true, emails: [], imap_error: 'Gmail IMAP is busy (too many connections) — retrying shortly', cooldown: true });
+    return { success: true, emails: [], imap_error: 'Gmail IMAP is busy (too many connections) — retrying shortly', cooldown: true };
   }
   if (Date.now() - inboxCache.at < INBOX_CACHE_MS) {
-    return res.json({ success: true, emails: inboxCache.emails, cached: true });
+    return { success: true, emails: inboxCache.emails, cached: true };
   }
   if (!inboxInFlight) {
     const holder = {};
+    const cfg = slow ? { imap: { ...IMAP_CONFIG.imap, authTimeout: 60000, connTimeout: 60000 } } : IMAP_CONFIG;
     inboxInFlight = (async () => {
       let timer;
       try {
         const deadline = new Promise((_, reject) => {
-          timer = setTimeout(() => reject(new Error(`IMAP did not answer within ${IMAP_DEADLINE_MS / 1000}s`)), IMAP_DEADLINE_MS);
+          timer = setTimeout(() => reject(new Error(`IMAP did not answer within ${deadlineMs / 1000}s`)), deadlineMs);
         });
-        const emails = await Promise.race([readInbox(holder), deadline]);
+        const emails = await Promise.race([readInbox(holder, cfg), deadline]);
         inboxCache = { at: Date.now(), emails };
         return { success: true, emails };
       } catch (err) {
@@ -331,7 +334,12 @@ app.get('/api/fetch-inbound-emails', async (req, res) => {
       }
     })();
   }
-  return res.json(await inboxInFlight);
+  return inboxInFlight;
+}
+
+// Endpoint: Fetch Real Inbound Emails sent to coutomerr@gmail.com
+app.get('/api/fetch-inbound-emails', async (req, res) => {
+  return res.json(await loadInbox());
 });
 
 // `npm run mail` runs this file directly and starts the bridge on port 3001.
@@ -342,4 +350,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app };
+module.exports = { app, loadInbox };
