@@ -10,6 +10,8 @@ import { useSearchParams } from "react-router-dom";
 import { Stats, Panel, Badge, Modal } from "../components/ui.jsx";
 import { GroupedBarBox, LineChartBox, Legend, SERIES } from "../components/charts.jsx";
 import { LockIcon, UnlockIcon, PauseIcon, PlayIcon } from "../components/icons.jsx";
+import SupportWorkflows from "../components/SupportWorkflows.jsx";
+import { useData } from "../db/store.jsx";
 import { rm, rmCompact, num, pct } from "../lib/format.js";
 import {
   maskPhonePDPA,
@@ -301,6 +303,32 @@ export default function UnifiedInbox() {
       localStorage.setItem("iwk_live_customer_emails", JSON.stringify(customerEmails));
     } catch (e) {}
   }, [customerEmails]);
+
+  // Support Email → Workflows dropdown: each email a workflow sends becomes a Support Email thread
+  const { customers: workflowCustomers, updateCustomer: updateWorkflowCustomer, settings: orgSettings } = useData();
+  const handleWorkflowEmailSent = ({ to, subject, body, customer, accountNo, workflow }) => {
+    const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const thread = {
+      id: `CE-WF-${stamp}`,
+      channel: "Customer Email",
+      customerName: customer?.name || to.split("@")[0],
+      senderEmail: to,
+      handledBy: "IWK Support Desk",
+      accountNo: accountNo || "N/A",
+      subject,
+      sentDate: `Today, ${timeStr}`,
+      openStatus: "Delivered (Workflow)",
+      inboundSnippet: body,
+      lastSnippet: body,
+      sentiment: "Neutral",
+      outcome: `${workflow} · Awaiting Reply`,
+      statusTone: "good",
+      uid: `workflow-${stamp}`,
+      history: [{ sender: "IWK Support Desk", text: body, time: `Today, ${timeStr}` }],
+    };
+    setCustomerEmails((prev) => [thread, ...prev]);
+  };
 
   // Auto-sync polling: check for new replies sent to coutomerr@gmail.com every 8 seconds
   useEffect(() => {
@@ -1380,6 +1408,13 @@ export default function UnifiedInbox() {
                   🗑️ Clear Inbox
                 </button>
               )}
+
+              <SupportWorkflows
+                customers={workflowCustomers}
+                updateCustomer={updateWorkflowCustomer}
+                website={orgSettings?.organisation?.website}
+                onSent={handleWorkflowEmailSent}
+              />
 
               <button
                 type="button"

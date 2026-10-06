@@ -1,5 +1,14 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Badge, Modal } from "../components/ui.jsx";
+import { useData } from "../db/store.jsx";
+import {
+  runWorkflow,
+  DEMO_WORKFLOWS,
+  AUDIENCES,
+  audienceCount,
+  getWorkflowSettings,
+  saveWorkflowSettings,
+} from "../lib/workflowEngine.js";
 
 const PREBUILT_WORKFLOWS = [
   {
@@ -215,6 +224,14 @@ const PREBUILT_WORKFLOWS = [
   },
 ];
 
+/* Existing four prebuilt workflows + the four end-to-end demo workflows. */
+const ALL_WORKFLOWS = [
+  ...PREBUILT_WORKFLOWS,
+  ...DEMO_WORKFLOWS.map((w) =>
+    w.liveTrigger ? { ...w, status: getWorkflowSettings().distressActive === false ? "DRAFT" : "ACTIVE" } : w
+  ),
+];
+
 const NODE_TYPES = [
   {
     type: "SEND_MESSAGE",
@@ -272,6 +289,7 @@ const AVAILABLE_VARIABLES = [
   { key: "{{account_no}}", label: "IWK Account No.", desc: "Sewerage account number" },
   { key: "{{bill_amount}}", label: "Outstanding Amount", desc: "Current bill balance" },
   { key: "{{due_date}}", label: "Bill Due Date", desc: "Payment due date" },
+  { key: "{{days_overdue}}", label: "Days Overdue", desc: "Days the bill is overdue" },
   { key: "{{installment_url}}", label: "Installment Link", desc: "Custom arrangement URL" },
   { key: "{{paid_amount}}", label: "Paid Amount", desc: "Last verified payment" },
   { key: "{{priority_level}}", label: "Priority Tag", desc: "RED, GREY, GREEN" },
@@ -279,7 +297,7 @@ const AVAILABLE_VARIABLES = [
 ];
 
 export default function Workflows() {
-  const [workflowsList, setWorkflowsList] = useState(PREBUILT_WORKFLOWS);
+  const [workflowsList, setWorkflowsList] = useState(ALL_WORKFLOWS);
   const [activeWfId, setActiveWfId] = useState(PREBUILT_WORKFLOWS[0].id);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [showAddNodeModal, setShowAddNodeModal] = useState(false);
@@ -297,6 +315,15 @@ export default function Workflows() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const canvasRef = useRef(null);
+
+  // Run workflow (end-to-end execution)
+  const { customers, updateCustomer, settings: orgSettings } = useData();
+  const [showRunModal, setShowRunModal] = useState(false);
+  const [runSettings, setRunSettings] = useState(getWorkflowSettings());
+  const [runLog, setRunLog] = useState([]);
+  const [runSummary, setRunSummary] = useState(null);
+  const [running, setRunning] = useState(false);
+  const [runError, setRunError] = useState("");
 
   // Collapsible sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -453,6 +480,8 @@ export default function Workflows() {
   // Toggle Publish Status
   const handleTogglePublish = () => {
     const nextStatus = activeWf.status === "ACTIVE" ? "DRAFT" : "ACTIVE";
+    // The live-call distress workflow is also read by the Testing page.
+    if (activeWf.liveTrigger) saveWorkflowSettings({ distressActive: nextStatus === "ACTIVE" });
     setWorkflowsList((prev) =>
       prev.map((w) => (w.id === activeWf.id ? { ...w, status: nextStatus } : w))
     );
@@ -464,6 +493,53 @@ export default function Workflows() {
   const handleSaveWorkflow = () => {
     setToast(`✓ Workflow "${activeWf.name}" saved successfully!`);
     setTimeout(() => setToast(null), 3000);
+  };
+
+  // Run the active workflow for real (email / SMS / n8n alert + field updates)
+  const openRunModal = () => {
+    setRunSettings(getWorkflowSettings());
+    setRunLog([]);
+    setRunSummary(null);
+    setRunError("");
+    setShowRunModal(true);
+  };
+
+  const handleRunWorkflow = async () => {
+    const needsEmail = activeWf.nodes.some((n) => n.type === "SEND_MESSAGE" && (n.channel || "sms") === "email");
+    if (needsEmail && !/^\S+@\S+\.\S+$/.test(runSettings.testEmail || "")) {
+      setRunError("Enter a valid test email address — all emails from this workflow are delivered there.");
+      return;
+    }
+    setRunError("");
+    const saved = saveWorkflowSettings(runSettings);
+    setRunLog([]);
+    setRunSummary(null);
+    setRunning(true);
+
+    const live = activeWf.liveTrigger
+      ? {
+          callId: `TEST-${String(Date.now()).slice(-6)}`,
+          customerName: "Live test caller (manual run)",
+          reason: "Manual test run from the Workflows page: the caller sounds distressed and says they cannot afford to pay.",
+          transcript: "Manual test run — no live call is active.",
+        }
+      : null;
+
+    try {
+      const summary = await runWorkflow(activeWf, {
+        customers,
+        settings: saved,
+        updateCustomer,
+        live,
+        website: orgSettings?.organisation?.website,
+        onLog: (entry) => setRunLog((l) => [...l, entry]),
+      });
+      setRunSummary(summary);
+    } catch (err) {
+      setRunLog((l) => [...l, { level: "err", text: `Run stopped: ${err.message}`, at: new Date() }]);
+    } finally {
+      setRunning(false);
+    }
   };
 
   // Add Node to Flow
@@ -919,6 +995,16 @@ export default function Workflows() {
                 style={{ fontSize: 12, fontWeight: 700, color: "var(--brand)" }}
               >
                 ➕ Add Node
+              </button>
+
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={openRunModal}
+                title="Execute this workflow now"
+                style={{ fontSize: 12, fontWeight: 700, color: "#10b981", borderColor: "rgba(16,185,129,0.4)" }}
+              >
+                ▶ Run Workflow
               </button>
 
               <button
@@ -1477,6 +1563,9 @@ export default function Workflows() {
                       <option value="Webhook Received">Webhook Received</option>
                       <option value="Manual Escalation Trigger">Manual Escalation Trigger</option>
                       <option value="Payment Overdue Event">Payment Overdue Event</option>
+                      <option value="Bill Due Soon (Scheduled)">Bill Due Soon (Scheduled)</option>
+                      <option value="Scheduled Broadcast">Scheduled Broadcast</option>
+                      <option value="Live Call: Distress Detected">Live Call: Distress Detected</option>
                     </select>
                   </div>
 
@@ -1549,6 +1638,36 @@ export default function Workflows() {
                       <option value="whatsapp">WhatsApp</option>
                     </select>
                   </div>
+
+                  {selectedNode.channel === "email" && (
+                    <>
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 700, color: "var(--text-dim)", display: "block", marginBottom: 4 }}>
+                          Email Subject
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedNode.subject || ""}
+                          onChange={(e) => updateNodeField(selectedNode.id, "subject", e.target.value)}
+                          placeholder="Email subject line..."
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 12.5 }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 700, color: "var(--text-dim)", display: "block", marginBottom: 4 }}>
+                          Email Delivery Route
+                        </label>
+                        <select
+                          value={selectedNode.provider || "smtp"}
+                          onChange={(e) => updateNodeField(selectedNode.id, "provider", e.target.value)}
+                          style={{ width: "100%", padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 12.5 }}
+                        >
+                          <option value="smtp">IWK mail service (SMTP)</option>
+                          <option value="n8n-alert">n8n distress alert webhook</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
 
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 700, color: "var(--text-dim)", display: "block", marginBottom: 4 }}>
@@ -1704,6 +1823,105 @@ export default function Workflows() {
           </div>
         )}
       </div>
+
+      {/* Run Workflow Modal */}
+      {showRunModal && (
+        <Modal
+          wide
+          title={`Run Workflow — ${activeWf.name}`}
+          onClose={() => !running && setShowRunModal(false)}
+          footer={
+            <>
+              <button type="button" className="btn-ghost" onClick={() => setShowRunModal(false)} disabled={running}>
+                Close
+              </button>
+              <button type="button" className="btn-solid" onClick={handleRunWorkflow} disabled={running}>
+                {running ? "Running…" : runSummary ? "▶ Run again" : "▶ Run now"}
+              </button>
+            </>
+          }
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ fontSize: 12.5, color: "var(--text-dim)", lineHeight: 1.5 }}>
+              <strong style={{ color: "var(--text)" }}>Audience:</strong>{" "}
+              {AUDIENCES[activeWf.audience || "all"]?.label}
+              {activeWf.audience && activeWf.audience !== "live"
+                ? ` — ${audienceCount(activeWf.audience, customers).toLocaleString()} matching account(s)`
+                : ""}
+              .<br />
+              Every message from a test run is delivered to the test email / phone below — never to the customer.
+              The intended customer is written at the top of the message.
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, fontWeight: 700, color: "var(--text-dim)" }}>
+                Test email
+                <input
+                  type="email"
+                  value={runSettings.testEmail}
+                  onChange={(e) => setRunSettings({ ...runSettings, testEmail: e.target.value })}
+                  placeholder="you@example.com"
+                  disabled={running}
+                  style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 12.5 }}
+                />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, fontWeight: 700, color: "var(--text-dim)" }}>
+                Test phone (for SMS steps, optional)
+                <input
+                  type="tel"
+                  value={runSettings.testPhone}
+                  onChange={(e) => setRunSettings({ ...runSettings, testPhone: e.target.value })}
+                  placeholder="+60123456789"
+                  disabled={running}
+                  style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 12.5 }}
+                />
+              </label>
+              {!activeWf.liveTrigger && (
+                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, fontWeight: 700, color: "var(--text-dim)" }}>
+                  Customers per run
+                  <select
+                    value={runSettings.limit}
+                    onChange={(e) => setRunSettings({ ...runSettings, limit: Number(e.target.value) })}
+                    disabled={running}
+                    style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 12.5 }}
+                  >
+                    {[1, 2, 3, 5, 10].map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
+
+            {runError && (
+              <div style={{ color: "#ef4444", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px", fontSize: 12.5, fontWeight: 600 }}>
+                {runError}
+              </div>
+            )}
+
+            {(runLog.length > 0 || running) && (
+              <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 12, maxHeight: 280, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+                {runLog.map((e, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, fontSize: 12.5, lineHeight: 1.45, alignItems: "flex-start" }}>
+                    <span style={{ flex: "none", fontWeight: 800, color: e.level === "err" ? "#ef4444" : e.level === "warn" ? "#f59e0b" : e.level === "ok" ? "#10b981" : "var(--text-faint)" }}>
+                      {e.level === "err" ? "✕" : e.level === "warn" ? "!" : e.level === "ok" ? "✓" : "•"}
+                    </span>
+                    <span style={{ color: "var(--text)" }}>{e.text}</span>
+                  </div>
+                ))}
+                {running && <div style={{ fontSize: 12, color: "var(--text-dim)" }}>Running…</div>}
+              </div>
+            )}
+
+            {runSummary && !running && (
+              <div style={{ fontSize: 13, fontWeight: 700, color: runSummary.failed ? "#ef4444" : "#10b981" }}>
+                Finished: {runSummary.sent} sent, {runSummary.failed} failed, {runSummary.skipped} skipped
+                {runSummary.recipients ? ` · ${runSummary.recipients} account(s)` : ""}.
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
 
       {/* Node Template Selector Modal */}
       {showAddNodeModal && (
