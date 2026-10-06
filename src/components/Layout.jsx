@@ -4,7 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useData } from "../db/store.jsx";
 import { logout, session } from "../auth/session.js";
 import { getStoredTheme, applyTheme } from "../lib/theme.js";
-import logoImg from "../assets/indah-water-logo.png";
+import logoImg from "../assets/iwk-logo.png";
 import {
   DashboardIcon,
   VoiceIcon,

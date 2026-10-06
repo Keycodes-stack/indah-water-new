@@ -13,7 +13,7 @@ import { getSupervisors, createSupervisor, deleteSupervisor } from "../auth/sess
 import { getStoredTheme, applyTheme } from "../lib/theme.js";
 import { rm, rmUnit, pct } from "../lib/format.js";
 import { Panel, Field, Badge, Modal } from "../components/ui.jsx";
-import logoImg from "../assets/indah-water-logo.png";
+import logoImg from "../assets/iwk-logo.png";
 
 /* Where call alerts get delivered. Static for now — only email is live. */
 const ALERT_CHANNELS = [

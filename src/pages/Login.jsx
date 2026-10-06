@@ -3,7 +3,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { login, isLoggedIn } from "../auth/session.js";
 import { useData } from "../db/store.jsx";
 import { getStoredTheme, applyTheme } from "../lib/theme.js";
-import logoImg from "../assets/indah-water-logo.png";
+import logoImg from "../assets/iwk-logo.png";
 
 export default function Login() {
   const [username, setUsername] = useState("");
