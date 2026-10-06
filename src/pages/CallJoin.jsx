@@ -42,7 +42,7 @@ export default function CallJoin() {
             gap: 8,
           }}
         >
-          <span>ℹ️</span>
+          
           <span>{toastMessage}</span>
         </div>
       )}
@@ -208,7 +208,7 @@ export default function CallJoin() {
               }}
               onClick={() => handleActionClick("Take the call")}
             >
-              <span>📞</span> Take the call
+              Take the call
             </button>
 
             <button
@@ -224,7 +224,7 @@ export default function CallJoin() {
               }}
               onClick={() => handleActionClick("Listen to call")}
             >
-              🎧 Listen to call
+              Listen to call
             </button>
 
             <button
@@ -263,7 +263,7 @@ export default function CallJoin() {
               gap: 6,
             }}
           >
-            <span>⚡ Live Telephony Takeover & WebRTC Monitoring</span>
+            <span>Live Telephony Takeover & WebRTC Monitoring</span>
           </div>
         </div>
 
