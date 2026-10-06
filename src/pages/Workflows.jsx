@@ -5,6 +5,7 @@ import { validateEmail, validatePhone } from "../lib/validate.js";
 import {
   runWorkflow,
   DEMO_WORKFLOWS,
+  upgradeLegacyWorkflow,
   AUDIENCES,
   audienceCount,
   getWorkflowSettings,
@@ -227,7 +228,7 @@ const PREBUILT_WORKFLOWS = [
 
 /* Existing four prebuilt workflows + the four end-to-end demo workflows. */
 const ALL_WORKFLOWS = [
-  ...PREBUILT_WORKFLOWS,
+  ...PREBUILT_WORKFLOWS.map(upgradeLegacyWorkflow),
   ...DEMO_WORKFLOWS.map((w) =>
     w.liveTrigger ? { ...w, status: getWorkflowSettings().distressActive === false ? "DRAFT" : "ACTIVE" } : w
   ),
@@ -506,7 +507,8 @@ export default function Workflows() {
   };
 
   const handleRunWorkflow = async () => {
-    const needsEmail = activeWf.nodes.some((n) => n.type === "SEND_MESSAGE" && (n.channel || "sms") === "email");
+    // a placeholder workflow sends nothing, so it needs neither a test email nor a test phone
+    const needsEmail = !activeWf.placeholder && activeWf.nodes.some((n) => n.type === "SEND_MESSAGE" && (n.channel || "sms") === "email");
     const emailCheck = validateEmail(runSettings.testEmail);
     if (needsEmail && !emailCheck.ok) {
       setRunError(`Test email: ${emailCheck.error} All emails from this workflow are delivered there.`);
@@ -1854,6 +1856,12 @@ export default function Workflows() {
           }
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {activeWf.placeholder && (
+              <div style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.35)", color: "#b87500", borderRadius: 8, padding: "8px 12px", fontSize: 12.5, fontWeight: 600 }}>
+                Placeholder workflow — a visual demo. Running it walks through the steps and shows what would happen, but
+                nothing is sent and no account is changed.
+              </div>
+            )}
             <div style={{ fontSize: 12.5, color: "var(--text-dim)", lineHeight: 1.5 }}>
               <strong style={{ color: "var(--text)" }}>Audience:</strong>{" "}
               {AUDIENCES[activeWf.audience || "all"]?.label}

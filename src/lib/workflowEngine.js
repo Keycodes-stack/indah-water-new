@@ -69,6 +69,22 @@ export const AUDIENCES = {
     label: "All contactable customers",
     match: (c) => c.contactable,
   },
+  hardship: {
+    label: "Hardship accounts (Hardship / eKasih)",
+    match: (c) => c.contactable && c.specialRouting === "Hardship/eKasih",
+  },
+  refusers: {
+    label: "Refuser accounts (segment: Refusers)",
+    match: (c) => c.contactable && c.segment === "Refusers",
+  },
+  dispute: {
+    label: "Accounts with an open billing dispute",
+    match: (c) => c.contactable && c.specialRouting === "Open Dispute",
+  },
+  ptp: {
+    label: "Accounts with a promise to pay",
+    match: (c) => c.contactable && !!c.promiseToPay,
+  },
   live: {
     label: "The caller on the live call",
     match: () => false,
@@ -94,9 +110,33 @@ function varsFor(c, extra = {}) {
     due_date: fmtDate(due),
     days_overdue: String(c.arrearsDays ?? 0),
     installment_url: extra.website || "https://www.iwk.com.my/",
-    paid_amount: fmtRm(0),
+    paid_amount: fmtRm(c.promiseToPay && c.promiseToPay.amount ? c.promiseToPay.amount : 0),
     priority_level: c.stage || "—",
     call_summary: extra.callSummary || "",
+    ...planVars(c),
+  };
+}
+
+// A proposed instalment plan for the account's balance (or its active plan's monthly amount).
+function planVars(c) {
+  const balance = Number(c.arrearsAmount || 0);
+  const active = c.instalmentPlan && c.instalmentPlan.active ? Number(c.instalmentPlan.monthlyAmount) : 0;
+  const months = active > 0 ? Math.max(1, Math.ceil(balance / active)) : balance >= 600 ? 12 : balance >= 200 ? 6 : 3;
+  const monthly = active > 0 ? active : balance / months;
+  const first = addDays(new Date().toISOString(), 14);
+  const lines = [];
+  for (let i = 0; i < Math.min(months, 6); i += 1) {
+    const d = new Date(first);
+    d.setMonth(d.getMonth() + i);
+    lines.push(`  ${i + 1}. ${fmtDate(d)}  —  ${fmtRm(Math.min(monthly, balance - monthly * i))}`);
+  }
+  if (months > 6) lines.push(`  … and ${months - 6} more monthly instalment(s)`);
+  return {
+    plan_months: String(months),
+    plan_monthly: fmtRm(monthly),
+    plan_total: fmtRm(balance),
+    plan_start: fmtDate(first),
+    plan_schedule: lines.join("\n"),
   };
 }
 
@@ -138,6 +178,7 @@ export async function runWorkflow(wf, ctx) {
   const tally = { recipients: 0, sent: 0, failed: 0, skipped: 0 };
 
   const audienceKind = wf.audience || "all";
+  const dry = !!wf.placeholder; // visual placeholder workflow: walks the steps but sends / changes nothing
   let recipients = [];
 
   for (const node of wf.nodes) {
@@ -200,6 +241,13 @@ export async function runWorkflow(wf, ctx) {
 
         case "SEND_MESSAGE": {
           const channel = node.channel || "email";
+          if (dry) {
+            const sample = recipients[0];
+            const preview = render(node.messagePrompt, sample._vars || varsFor(sample, { website })).replace(/\s+/g, " ").slice(0, 110);
+            log("warn", `PLACEHOLDER — nothing was sent. A ${channel.toUpperCase()} would go to ${recipients.length} account(s): "${preview}…"`, node.id);
+            tally.skipped += recipients.length;
+            break;
+          }
           for (const r of recipients) {
             const vars = r._vars || varsFor(r, { website, callSummary: r._live?.transcript });
             const body = render(node.messagePrompt, vars);
@@ -292,6 +340,10 @@ export async function runWorkflow(wf, ctx) {
         }
 
         case "UPDATE_FIELDS": {
+          if (dry) {
+            log("warn", `PLACEHOLDER — ${node.fieldName} = ${node.fieldValue} was NOT written.`, node.id);
+            break;
+          }
           const eligible = recipients.filter((r) => !r._live && r._sendOk !== false);
           eligible.forEach((r) => updateCustomer?.(r.id, { [node.fieldName]: node.fieldValue }));
           const skippedN = recipients.filter((r) => !r._live).length - eligible.length;
@@ -309,6 +361,10 @@ export async function runWorkflow(wf, ctx) {
         }
 
         case "PUT_DND": {
+          if (dry) {
+            log("warn", "PLACEHOLDER — no account was added to the DND registry.", node.id);
+            break;
+          }
           recipients.filter((r) => !r._live).forEach((r) => updateCustomer?.(r.id, { contactable: false, dnd: true }));
           log("ok", `Added ${recipients.length} account(s) to the DND registry.`, node.id);
           break;
@@ -461,3 +517,152 @@ export const DEMO_WORKFLOWS = [
     ],
   },
 ];
+
+/* ---------- upgrades for the four ORIGINAL workflows (wf-1 … wf-4) ----------
+   Their steps and names are untouched. They gain: the right audience (instead of "everyone"), SMS text that
+   Malaysian carriers will not block (no URL / phone number inside an SMS), and an email step where a workflow
+   previously produced nothing. The email steps may contain phone numbers and links; SMS may not. */
+const E = (id, title, subject, text) => ({ id, type: "SEND_MESSAGE", title, channel: "email", subject, messagePrompt: text });
+
+const LEGACY_UPGRADES = {
+  "wf-1": {
+    audience: "hardship",
+    patch: {
+      "n-3": {
+        messagePrompt:
+          "IWK: Salam {{customer_name}}, akaun {{account_no}} mempunyai baki {{bill_amount}}. Kami boleh bantu dengan pelan ansuran. Sila hubungi pusat khidmat pelanggan IWK.",
+      },
+    },
+    insert: [
+      {
+        after: "n-3",
+        node: E(
+          "n-e1",
+          "💬 Send Instalment Options Email",
+          "Instalment options for your IWK account {{account_no}}",
+          "Salam {{customer_name}},\n\nWe understand that paying in one go can be difficult. Your Indah Water Konsortium (IWK) account {{account_no}} has an outstanding balance of {{bill_amount}}.\n\nWe can arrange an instalment plan, for example {{plan_months}} monthly payments of {{plan_monthly}}, starting {{plan_start}}. Please reply to this email or call IWK Customer Care on 03-20803888 and our Hardship & Financial Assistance Desk will help you.\n\nThank you,\nIWK Customer Care"
+        ),
+      },
+    ],
+  },
+  "wf-2": {
+    audience: "refusers",
+    patch: {
+      "n-3": {
+        messagePrompt: "PERINGATAN MESRA IWK: Akaun {{account_no}} telah dimajukan ke Unit Tindakan Khas. Sila jelaskan tunggakan {{bill_amount}} secepat mungkin.",
+      },
+    },
+    insert: [
+      {
+        after: "n-3",
+        node: E(
+          "n-e1",
+          "💬 Send Formal Notice Email",
+          "Formal notice — IWK account {{account_no}}",
+          "Salam {{customer_name}},\n\nThis is a formal notice from Indah Water Konsortium (IWK). Account {{account_no}} has an unpaid balance of {{bill_amount}}, outstanding for {{days_overdue}} days, and the account has been referred to our Special Action Unit.\n\nPlease settle the amount, or contact IWK Customer Care on 03-20803888 to discuss your options, to avoid further action.\n\nIWK Legal & Recovery Desk"
+        ),
+      },
+    ],
+  },
+  "wf-3": {
+    audience: "dispute",
+    insert: [
+      {
+        after: "n-3",
+        node: E(
+          "n-e1",
+          "💬 Send Dispute Acknowledgement Email",
+          "We have received your billing query — account {{account_no}}",
+          "Salam {{customer_name}},\n\nThank you for raising a query about your Indah Water Konsortium (IWK) bill for account {{account_no}} (current balance {{bill_amount}}).\n\nOur QA team is verifying your payment records and the itemised charges, and will contact you with the outcome. You do not need to do anything further for now.\n\nIWK Customer Care"
+        ),
+      },
+    ],
+  },
+  "wf-4": {
+    audience: "ptp",
+    insert: [
+      {
+        after: "n-3",
+        node: {
+          id: "n-e1",
+          type: "SEND_MESSAGE",
+          title: "💬 Send Payment Receipt SMS",
+          channel: "sms",
+          messagePrompt: "IWK: Terima kasih {{customer_name}}! Pembayaran {{paid_amount}} untuk akaun {{account_no}} telah diterima.",
+        },
+      },
+      {
+        after: "n-e1",
+        node: E(
+          "n-e2",
+          "💬 Send Payment Receipt Email",
+          "Payment received — IWK account {{account_no}}",
+          "Salam {{customer_name}},\n\nThank you. We have received your payment of {{paid_amount}} for Indah Water Konsortium (IWK) account {{account_no}}.\n\nIWK Customer Care"
+        ),
+      },
+    ],
+  },
+};
+
+/** Returns the workflow with its upgrade applied (or unchanged if it has none). */
+export function upgradeLegacyWorkflow(wf) {
+  const up = LEGACY_UPGRADES[wf.id];
+  if (!up) return wf;
+  let nodes = wf.nodes.map((n) => (up.patch && up.patch[n.id] ? { ...n, ...up.patch[n.id] } : n));
+  for (const ins of up.insert || []) {
+    const at = nodes.findIndex((n) => n.id === ins.after);
+    nodes.splice(at + 1, 0, { ...ins.node, y: 180 });
+  }
+  nodes = nodes.map((n, i) => ({ ...n, x: 80 + i * 340, y: typeof n.y === "number" ? n.y : 180 }));
+  return { ...wf, audience: up.audience, nodes };
+}
+
+/* ---------- the two workflows from the demo list that are not part of the first four ---------- */
+DEMO_WORKFLOWS.push(
+  {
+    id: "wf-9",
+    name: "QR Payment Sticker (SMS / Email)",
+    description: "Placeholder: tells overdue customers by SMS and email that a DuitNow QR payment sticker is ready. Visual only — no QR is generated or sent.",
+    status: "ACTIVE",
+    category: "Payment Notifications",
+    audience: "overdue",
+    placeholder: true,
+    nodes: [
+      T("n-1", 80, "Payment Overdue Event"),
+      { id: "n-2", type: "FETCH_BILL", title: "💲 Fetch Bill Amount", accountQuery: "Pull overdue balance & account reference", x: 420, y: 180 },
+      {
+        id: "n-3", type: "SEND_MESSAGE", title: "💬 Send QR Payment Sticker SMS", channel: "sms",
+        messagePrompt: "IWK: Salam {{customer_name}}, pelekat QR pembayaran untuk akaun {{account_no}} ({{bill_amount}}) telah sedia. Imbas untuk bayar dengan mudah.",
+        x: 760, y: 180,
+      },
+      {
+        id: "n-4", type: "SEND_MESSAGE", title: "💬 Send QR Payment Sticker Email", channel: "email",
+        subject: "Your IWK QR payment sticker — account {{account_no}}",
+        messagePrompt: "Salam {{customer_name}},\n\nYour payment QR sticker for Indah Water Konsortium (IWK) account {{account_no}} (balance {{bill_amount}}) is ready. Scan it with your banking app or e-wallet to pay quickly.\n\nIWK Customer Care",
+        x: 1100, y: 180,
+      },
+      { id: "n-5", type: "UPDATE_FIELDS", title: "🏷️ Update Customer Fields", fieldName: "qr_sticker_status", fieldValue: "QR_STICKER_SENT", x: 1440, y: 180 },
+    ],
+  },
+  {
+    id: "wf-10",
+    name: "Instalment Plan Breakdown Email (for approval)",
+    description: "Builds an instalment plan for an overdue account and emails the full breakdown for approval (to the test email during demos).",
+    status: "ACTIVE",
+    category: "Instalment Approvals",
+    audience: "overdue",
+    nodes: [
+      T("n-1", 80, "Manual Escalation Trigger"),
+      { id: "n-2", type: "FETCH_BILL", title: "💲 Fetch Bill Amount", accountQuery: "Pull outstanding balance to build the plan", x: 420, y: 180 },
+      {
+        id: "n-3", type: "SEND_MESSAGE", title: "💬 Send Plan Breakdown for Approval", channel: "email",
+        subject: "For approval: instalment plan for account {{account_no}} ({{customer_name}})",
+        messagePrompt:
+          "Instalment plan for approval\n\nCustomer: {{customer_name}}\nAccount: {{account_no}}\nOutstanding balance: {{plan_total}} ({{days_overdue}} days overdue)\n\nProposed plan: {{plan_months}} monthly instalments of {{plan_monthly}}, first payment {{plan_start}}.\n\nSchedule:\n{{plan_schedule}}\n\nPlease review and reply APPROVE or REJECT.\n\nIWK Collections",
+        x: 760, y: 180,
+      },
+      { id: "n-4", type: "INTERNAL_TEAM", title: "👥 Send to Internal Team", team: "Collections Manager (plan approval)", x: 1100, y: 180 },
+      { id: "n-5", type: "UPDATE_FIELDS", title: "🏷️ Update Customer Fields", fieldName: "plan_status", fieldValue: "PENDING_APPROVAL", x: 1440, y: 180 },
+    ],
+  }
+);
