@@ -20,7 +20,7 @@ app.use(express.json());
 
 // Target Support Email Credentials
 const GMAIL_USER = process.env.GMAIL_USER || 'coutomerr@gmail.com';
-const GMAIL_PASS = process.env.GMAIL_PASS || 'wvofrlfpjwnmpbjn';
+const GMAIL_PASS = process.env.GMAIL_PASS || 'evjhxxiytmeugnek';
 
 // SMTP Transporter for Sending Real Emails
 // Twilio defaults used by /api/send-sms when the browser does not pass its own credentials.
