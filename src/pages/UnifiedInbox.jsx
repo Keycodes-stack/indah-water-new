@@ -13,6 +13,7 @@ import { LockIcon, UnlockIcon, PauseIcon, PlayIcon } from "../components/icons.j
 import SupportWorkflows from "../components/SupportWorkflows.jsx";
 import { useData } from "../db/store.jsx";
 import { apiUrl, IS_LOCAL_API } from "../lib/api.js";
+import { validateEmail, validatePhone } from "../lib/validate.js";
 import { rm, rmCompact, num, pct } from "../lib/format.js";
 import {
   maskPhonePDPA,
@@ -668,8 +669,11 @@ export default function UnifiedInbox() {
 
     // If channel is Email, dispatch real email to recipient via local mail bridge
     if (activeMessage.channel === "Email") {
-      const recipient = activeMessage.email || activeMessage.phone;
-      fetch(apiUrl("/api/send-email"), {
+      const recipientCheck = validateEmail(activeMessage.email || activeMessage.phone);
+      const recipient = recipientCheck.ok ? recipientCheck.email : "";
+      if (!recipientCheck.ok) {
+        setSmsSendStatus(`ℹ️ Email not sent: ${recipientCheck.error}`);
+      } else fetch(apiUrl("/api/send-email"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -809,6 +813,12 @@ export default function UnifiedInbox() {
   const handleSendCompose = async (e) => {
     if (e) e.preventDefault();
     if (!composeToEmail.trim() || !composeBody.trim()) return;
+    const recipientCheck = validateEmail(composeToEmail);
+    if (!recipientCheck.ok) {
+      setComposeStatus(`❌ ${recipientCheck.error}`);
+      return;
+    }
+    const composeRecipient = recipientCheck.email;
     setComposeSending(true);
     setComposeStatus("Sending email via IWK Support Desk...");
 
@@ -819,8 +829,8 @@ export default function UnifiedInbox() {
       const newThread = {
         id: `CE-OUTBOUND-${Date.now()}`,
         channel: "Customer Email",
-        customerName: composeCustomerName.trim() || composeToEmail.trim().split("@")[0],
-        senderEmail: composeToEmail.trim(),
+        customerName: composeCustomerName.trim() || composeRecipient.split("@")[0],
+        senderEmail: composeRecipient,
         handledBy: "IWK Support Desk",
         accountNo: composeAccountNo.trim() || "N/A",
         subject: subjectLine,
@@ -857,22 +867,28 @@ export default function UnifiedInbox() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: composeToEmail.trim(),
+          to: composeRecipient,
           subject: subjectLine,
           body: composeBody.trim(),
           accountNo: composeAccountNo.trim() || "N/A",
         }),
       });
       const data = await res.json();
+      if (res.status === 400 && data.error) {
+        // the server rejected the address itself (e.g. its domain cannot receive email) — nothing was sent
+        setComposeStatus(`❌ ${data.error}`);
+        setComposeSending(false);
+        return;
+      }
       if (data.success) {
         setComposeStatus("✅ Email sent successfully! Awaiting customer reply...");
       } else {
-        setComposeStatus(`✅ Dispatched to ${composeToEmail.trim()}!`);
+        setComposeStatus(`✅ Dispatched to ${composeRecipient}!`);
       }
       createThreadAndClose();
     } catch (err) {
       console.warn("Mail bridge notice (Cloud HTTPS fallback):", err);
-      setComposeStatus(`✅ Dispatched to ${composeToEmail.trim()}!`);
+      setComposeStatus(`✅ Dispatched to ${composeRecipient}!`);
       createThreadAndClose();
     }
     setComposeSending(false);
@@ -2370,6 +2386,11 @@ export default function UnifiedInbox() {
                         const num = testInputNumber.trim();
                         const msg = testInputMessage.trim();
                         if (!num || !msg) return;
+                        const phoneCheck = validatePhone(num);
+                        if (!phoneCheck.ok) {
+                          setSmsSendStatus(`ℹ️ SMS not sent: ${phoneCheck.error}`);
+                          return;
+                        }
                         setIsSendingSms(true);
                         setSmsSendStatus("Sending test SMS...");
                         try {
@@ -2495,10 +2516,16 @@ export default function UnifiedInbox() {
                       style={{ fontSize: 12, padding: "6px 14px", whiteSpace: "nowrap" }}
                       disabled={isSendingSms}
                       onClick={async () => {
-                        const targetEmail = document.getElementById("testEmailAddress").value;
+                        const rawEmail = document.getElementById("testEmailAddress").value;
                         const subject = document.getElementById("testEmailSubject").value;
                         const body = document.getElementById("testEmailBody").value;
-                        if (!targetEmail) return;
+                        if (!rawEmail) return;
+                        const emailCheck = validateEmail(rawEmail);
+                        if (!emailCheck.ok) {
+                          setSmsSendStatus(`ℹ️ Email not sent: ${emailCheck.error}`);
+                          return;
+                        }
+                        const targetEmail = emailCheck.email;
 
                         setIsSendingSms(true);
                         setSmsSendStatus("Dispatching live email via mail bridge...");
@@ -2677,7 +2704,7 @@ export default function UnifiedInbox() {
               <button
                 type="button"
                 className="btn-solid"
-                disabled={!inboundSenderEmail.trim() || !inboundEmailMessage.trim()}
+                disabled={!validateEmail(inboundSenderEmail).ok || !inboundEmailMessage.trim()}
                 onClick={async () => {
                   const sEmail = inboundSenderEmail.trim();
                   const sName = inboundSenderName.trim() || sEmail.split("@")[0];

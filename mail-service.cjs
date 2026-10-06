@@ -3,6 +3,8 @@ const cors = require('cors');
 const nodemailer = require('nodemailer');
 const imaps = require('imap-simple');
 const simpleParser = require('mailparser').simpleParser;
+const dns = require('dns').promises;
+const { parsePhoneNumberFromString } = require('libphonenumber-js/mobile');
 
 // ─── Prevent unhandled rejections from crashing the server ─────────────────
 process.on('uncaughtException', (err) => {
@@ -39,6 +41,64 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 20000,
 });
 
+// ─── Strict input validation (same rules as src/lib/validate.js in the browser) ─────────────────
+const EMAIL_LOCAL = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
+const EMAIL_LABEL = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+
+// Exactly ONE plain address: no names, spaces, commas or header-injection characters.
+function checkEmail(raw) {
+  const email = String(raw == null ? '' : raw).trim();
+  if (!email) return { ok: false, error: 'Enter an email address.' };
+  if (email.length > 254 || /[\s,;<>()\[\]\\":]/.test(email)) {
+    return { ok: false, error: 'Enter exactly one email address, e.g. name@example.com (no spaces, commas or display names).' };
+  }
+  const parts = email.split('@');
+  if (parts.length !== 2) return { ok: false, error: `"${email}" is not a valid email address.` };
+  const [local, domain] = parts;
+  const labels = domain.split('.');
+  const tld = labels[labels.length - 1] || '';
+  const okLocal = local.length > 0 && local.length <= 64 && EMAIL_LOCAL.test(local);
+  const okDomain =
+    labels.length >= 2 && labels.every((l) => EMAIL_LABEL.test(l)) && (/^[A-Za-z]{2,}$/.test(tld) || /^xn--[A-Za-z0-9-]+$/.test(tld));
+  if (!okLocal || !okDomain) return { ok: false, error: `"${email}" is not a valid email address.` };
+  return { ok: true, email: `${local}@${domain.toLowerCase()}` };
+}
+
+// A valid, real-numbering-plan MOBILE number. Accepts +60123456789, 0123456789, 012-345 6789, 0060123456789 …
+// (numbers without a country code are read as Malaysian). Returns the E.164 form.
+function checkPhone(raw) {
+  const cleaned = String(raw == null ? '' : raw).trim().replace(/[\s().-]/g, '');
+  if (!cleaned) return { ok: false, error: 'Enter a phone number.' };
+  if (!/^\+?\d+$/.test(cleaned)) return { ok: false, error: 'A phone number may contain only digits and a leading +.' };
+  const parsed = parsePhoneNumberFromString(cleaned, 'MY');
+  if (!parsed || !parsed.isValid()) {
+    return { ok: false, error: `"${raw}" is not a valid phone number. Use a mobile number such as +60123456789.` };
+  }
+  const type = parsed.getType();
+  if (type && type !== 'MOBILE' && type !== 'FIXED_LINE_OR_MOBILE') {
+    return { ok: false, error: `${parsed.formatInternational()} is a ${type.toLowerCase().replace(/_/g, ' ')} number and cannot receive SMS. Use a mobile number.` };
+  }
+  return { ok: true, e164: parsed.number, country: parsed.country };
+}
+
+// Does the address's domain exist and accept mail? (MX record, or an A record as the RFC fallback.)
+// A DNS *timeout* never blocks a send — only a definite "this domain has no mail server".
+async function domainCanReceiveMail(domain) {
+  const withTimeout = (p) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('dns timeout'), { code: 'ETIMEOUT' })), 3500))]);
+  try {
+    const mx = await withTimeout(dns.resolveMx(domain));
+    if (mx && mx.length) return true;
+  } catch (e) {
+    if (e.code !== 'ENODATA' && e.code !== 'ENOTFOUND') return true; // transient DNS problem: don't block
+  }
+  try {
+    const a = await withTimeout(dns.resolve4(domain));
+    return !!(a && a.length);
+  } catch (e) {
+    return e.code !== 'ENODATA' && e.code !== 'ENOTFOUND';
+  }
+}
+
 // Endpoint: Send Real Email from coutomerr@gmail.com
 app.post('/api/send-email', async (req, res) => {
   try {
@@ -47,9 +107,15 @@ app.post('/api/send-email', async (req, res) => {
       return res.status(400).json({ error: 'Missing recipient or body' });
     }
 
+    const rcpt = checkEmail(to);
+    if (!rcpt.ok) return res.status(400).json({ error: rcpt.error, field: 'to' });
+    if (!(await domainCanReceiveMail(rcpt.email.split('@')[1]))) {
+      return res.status(400).json({ error: `The domain "${rcpt.email.split('@')[1]}" cannot receive email — please check the address for typos.`, field: 'to' });
+    }
+
     const mailOptions = {
       from: `"IWK Customer Support Desk" <${GMAIL_USER}>`,
-      to: to,
+      to: rcpt.email,
       replyTo: GMAIL_USER,
       subject: subject || `IWK Support Response: Account ${accountNo || '6199-General'}`,
       text: body,
@@ -70,8 +136,8 @@ app.post('/api/send-email', async (req, res) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[SMTP] Email sent to ${to}: ${info.messageId}`);
-    return res.json({ success: true, messageId: info.messageId, to });
+    console.log(`[SMTP] Email sent to ${rcpt.email}: ${info.messageId}`);
+    return res.json({ success: true, messageId: info.messageId, to: rcpt.email });
   } catch (err) {
     console.error('[SMTP ERROR]', err.message);
     return res.status(500).json({ error: err.message });
@@ -91,7 +157,16 @@ app.post('/api/send-sms', async (req, res) => {
       return res.status(400).json({ error: "Missing 'to' or 'body'" });
     }
 
-    const cleanTo = to.replace(/\s+/g, '').replace(/-/g, '');
+    const phone = checkPhone(to);
+    if (!phone.ok) return res.status(400).json({ error: phone.error, field: 'to' });
+    if (!/^\+[1-9]\d{7,14}$/.test(from)) {
+      return res.status(400).json({ error: 'The sender number must be in international format, e.g. +19854652238.', field: 'from' });
+    }
+    if (String(body).length > 1600) {
+      return res.status(400).json({ error: 'The SMS text is too long (maximum 1600 characters).', field: 'body' });
+    }
+
+    const cleanTo = phone.e164;
     const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`;
     const params = new URLSearchParams();
     // Malaysia (+60): operators require the "RM 0.00" header and a brand name in every SMS, otherwise the

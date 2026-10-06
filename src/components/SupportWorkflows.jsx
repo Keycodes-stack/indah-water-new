@@ -7,6 +7,7 @@
 
 import { useMemo, useState } from "react";
 import { Modal } from "./ui.jsx";
+import { validateEmail } from "../lib/validate.js";
 import {
   runWorkflow,
   DEMO_WORKFLOWS,
@@ -47,12 +48,13 @@ export default function SupportWorkflows({ customers, updateCustomer, website, o
   };
 
   const run = async () => {
-    if (!/^\S+@\S+\.\S+$/.test(settings.testEmail || "")) {
-      setError("Enter a valid test email address — all emails from this workflow are delivered there.");
+    const emailCheck = validateEmail(settings.testEmail);
+    if (!emailCheck.ok) {
+      setError(`Test email: ${emailCheck.error} All emails from this workflow are delivered there.`);
       return;
     }
     setError("");
-    const saved = saveWorkflowSettings(settings);
+    const saved = saveWorkflowSettings({ ...settings, testEmail: emailCheck.email });
     setLog([]);
     setSummary(null);
     setRunning(true);

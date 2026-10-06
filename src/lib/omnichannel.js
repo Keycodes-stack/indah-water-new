@@ -1,5 +1,6 @@
 // Client-side API helpers for Twilio SMS and GoHighLevel (GHL) Integrations
 import { apiUrl } from "./api.js";
+import { validatePhone } from "./validate.js";
 
 export const TWILIO_STORAGE_KEY = "iwk_twilio_config";
 export const GHL_STORAGE_KEY = "iwk_ghl_config";
@@ -59,7 +60,10 @@ export async function sendTwilioSms({ to, body }) {
     throw new Error("Twilio is not configured. Please enter Account SID, Auth Token and From Number in settings.");
   }
 
-  const cleanTo = to.replace(/\s+/g, "").replace(/-/g, "");
+  // Strict: only a valid MOBILE number is ever sent to (normalised to +E.164)
+  const phone = validatePhone(to);
+  if (!phone.ok) throw new Error(phone.error);
+  const cleanTo = phone.e164;
 
   // 1. Try sending through the mail bridge / SMS proxy (localhost:3001 locally, /api on Netlify)
   let proxyFailure = null;

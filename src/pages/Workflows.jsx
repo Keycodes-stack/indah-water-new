@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Badge, Modal } from "../components/ui.jsx";
 import { useData } from "../db/store.jsx";
+import { validateEmail, validatePhone } from "../lib/validate.js";
 import {
   runWorkflow,
   DEMO_WORKFLOWS,
@@ -506,12 +507,23 @@ export default function Workflows() {
 
   const handleRunWorkflow = async () => {
     const needsEmail = activeWf.nodes.some((n) => n.type === "SEND_MESSAGE" && (n.channel || "sms") === "email");
-    if (needsEmail && !/^\S+@\S+\.\S+$/.test(runSettings.testEmail || "")) {
-      setRunError("Enter a valid test email address — all emails from this workflow are delivered there.");
+    const emailCheck = validateEmail(runSettings.testEmail);
+    if (needsEmail && !emailCheck.ok) {
+      setRunError(`Test email: ${emailCheck.error} All emails from this workflow are delivered there.`);
+      return;
+    }
+    // a test phone is optional, but when entered it must be a valid mobile number
+    const phoneCheck = (runSettings.testPhone || "").trim() ? validatePhone(runSettings.testPhone) : null;
+    if (phoneCheck && !phoneCheck.ok) {
+      setRunError(`Test phone: ${phoneCheck.error}`);
       return;
     }
     setRunError("");
-    const saved = saveWorkflowSettings(runSettings);
+    const saved = saveWorkflowSettings({
+      ...runSettings,
+      testEmail: emailCheck.ok ? emailCheck.email : runSettings.testEmail,
+      testPhone: phoneCheck ? phoneCheck.e164 : runSettings.testPhone,
+    });
     setRunLog([]);
     setRunSummary(null);
     setRunning(true);
