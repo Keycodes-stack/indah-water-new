@@ -18,20 +18,12 @@ export const CONFIG = {
     callerNumber: "+60 3-6043 2495",
     baseUrl: "https://api.vapi.ai",
     voices: {
-      manglish: [
-        {
-          id: "2LyhoWYWTvmqt5r3iFg4",
-          label: "Manglish 1",
-          provider: "11labs",
-          model: "eleven_v3",
-        },
-        {
-          id: "D1360BR3zCp9v0EXUpO4",
-          label: "Manglish 2",
-          provider: "11labs",
-          model: "eleven_v3",
-        },
-      ],
+      manglish: {
+        id: "D1360BR3zCp9v0EXUpO4",
+        label: "Manglish",
+        provider: "11labs",
+        model: "eleven_v3",
+      },
       malay: [
         {
           id: "w2dXNwje6o73fWGIO6CD",
