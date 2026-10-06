@@ -244,6 +244,51 @@ app.get('/api/health', async (req, res) => {
   return res.json({ ok: out.smtp.ok && out.twilio.ok, ...out, mode: process.env.AWS_LAMBDA_FUNCTION_NAME ? 'netlify-function' : 'local' });
 });
 
+// Endpoint: SMS replies. Reads the messages RECEIVED on the Twilio number straight from Twilio's REST API,
+// so nothing has to be configured in the Twilio console (no webhook). Only someone who holds the Twilio
+// credentials can read them: they must be sent in the request body (same as /api/send-sms) and Twilio checks them.
+app.post('/api/fetch-inbound-sms', async (req, res) => {
+  try {
+    const { accountSid, authToken, fromNumber } = req.body || {};
+    const sid = String(accountSid || '').trim();
+    const token = String(authToken || '').trim();
+    const number = String(fromNumber || '').trim();
+    if (!sid || !token || !number) {
+      return res.status(400).json({ error: 'Twilio Account SID, Auth Token and number are required.' });
+    }
+    if (!/^AC[0-9a-f]{32}$/i.test(sid)) return res.status(400).json({ error: 'That is not a valid Twilio Account SID.' });
+    if (!/^\+[1-9]\d{7,14}$/.test(number)) {
+      return res.status(400).json({ error: 'The Twilio number must be in international format, e.g. +19854652238.' });
+    }
+
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 8000);
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json?To=${encodeURIComponent(number)}&PageSize=50`;
+    const r = await fetch(url, {
+      headers: { Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64') },
+      signal: ctl.signal,
+    });
+    clearTimeout(timer);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      return res.status(r.status === 401 ? 401 : 502).json({ error: data.message || `Twilio error ${r.status}` });
+    }
+
+    const messages = (data.messages || [])
+      .filter((m) => m.direction === 'inbound')
+      .map((m) => ({
+        sid: m.sid,
+        from: m.from,
+        to: m.to,
+        body: m.body,
+        dateSent: m.date_sent || m.date_created,
+      }));
+    return res.json({ success: true, messages });
+  } catch (err) {
+    return res.status(500).json({ error: err.name === 'AbortError' ? 'Twilio did not answer in time.' : err.message });
+  }
+});
+
 // ─── IMAP Config with longer timeouts ──────────────────────────────────────
 const IMAP_CONFIG = {
   imap: {

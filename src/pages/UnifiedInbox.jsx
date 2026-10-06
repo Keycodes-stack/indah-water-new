@@ -269,6 +269,67 @@ function mergeInboundIntoThread(thread, inbound) {
   };
 }
 
+/* ---- SMS replies ------------------------------------------------------------------------------
+   Replies are read from Twilio (POST /api/fetch-inbound-sms) and merged into the SMS table. A "live" entry
+   (one created by sending a real SMS) keeps a `thread` array: our outgoing texts and the customer's replies.
+   Each reply is identified by its Twilio message sid, so it is added exactly once. */
+const phoneKey = (p) => {
+  const v = validatePhone(p);
+  return v.ok ? v.e164 : String(p || "").replace(/\D/g, "");
+};
+
+const smsTimeLabel = (iso) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "Just now";
+  const today = new Date().toDateString() === d.toDateString();
+  const t = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return today ? `Today, ${t}` : `${d.toLocaleDateString([], { day: "2-digit", month: "short" })}, ${t}`;
+};
+
+const isLiveSms = (s) => Array.isArray(s.thread) || s.campaign === "Real-Time Twilio SMS";
+
+function mergeInboundSms(list, messages) {
+  let changed = false;
+  const next = [...list];
+
+  [...messages]
+    .sort((a, b) => new Date(a.dateSent) - new Date(b.dateSent))
+    .forEach((m) => {
+      if (next.some((s) => (s.thread || []).some((t) => t.sid === m.sid))) return; // already shown
+
+      const from = phoneKey(m.from);
+      const reply = { sender: "Customer SMS", text: m.body, time: smsTimeLabel(m.dateSent), sid: m.sid };
+      const optOut = /^\s*(stop|berhenti|unsubscribe|batal)\b/i.test(m.body || "");
+      const tags = optOut
+        ? { sentiment: "Negative", intentFlag: "Opt-out (STOP) / Suppress", statusTone: "bad" }
+        : { sentiment: "Neutral", intentFlag: "Customer Replied", statusTone: "good" };
+
+      const idx = next.findIndex((s) => isLiveSms(s) && phoneKey(s.phone) === from);
+      if (idx !== -1) {
+        const cur = next[idx];
+        // an entry saved before threads existed holds our outgoing text in `inboundText`
+        const base = cur.thread || [{ sender: "IWK Support Desk", text: cur.inboundText, time: cur.timestamp }];
+        next[idx] = { ...cur, thread: [...base, reply], inboundText: m.body, timestamp: reply.time, deliveryStatus: "Replied", ...tags };
+      } else {
+        next.unshift({
+          id: `SMS-IN-${m.sid}`,
+          customerName: `Customer (${from})`,
+          phone: from,
+          accountNo: "N/A",
+          campaign: "Real-Time Twilio SMS",
+          deliveryStatus: "Received",
+          inboundText: m.body,
+          timestamp: reply.time,
+          thread: [reply],
+          ...tags,
+        });
+      }
+      changed = true;
+    });
+
+  return changed ? next : list;
+}
+
 export default function UnifiedInbox() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -439,6 +500,43 @@ export default function UnifiedInbox() {
     fetchLatestReplies();
     // 8s against the local bridge as before; a deployed function does a full IMAP login per call, so go gentler.
     const interval = setInterval(fetchLatestReplies, IS_LOCAL_API ? 8000 : 20000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // SMS replies: ask Twilio for messages received on our number and merge them into the SMS table
+  useEffect(() => {
+    let inFlight = false;
+    const fetchSmsReplies = async () => {
+      if (inFlight || document.hidden) return;
+      const cfg = getTwilioConfig();
+      if (!cfg.accountSid || !cfg.authToken || !cfg.fromNumber) return;
+      inFlight = true;
+      try {
+        const res = await fetch(apiUrl("/api/fetch-inbound-sms"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accountSid: cfg.accountSid, authToken: cfg.authToken, fromNumber: cfg.fromNumber }),
+        });
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.messages) || data.messages.length === 0) return;
+        setSmsMessages((prev) => {
+          const merged = mergeInboundSms(prev, data.messages);
+          if (merged !== prev) {
+            try {
+              localStorage.setItem("iwk_live_sms_messages", JSON.stringify(merged));
+            } catch (e) {}
+          }
+          return merged;
+        });
+      } catch (e) {
+        // silent background poll
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    fetchSmsReplies();
+    const interval = setInterval(fetchSmsReplies, IS_LOCAL_API ? 10000 : 20000);
     return () => clearInterval(interval);
   }, []);
 
@@ -784,18 +882,24 @@ export default function UnifiedInbox() {
 
     // If channel is SMS, update smsMessages
     if (activeMessage.channel === "SMS") {
-      setSmsMessages((prev) =>
-        prev.map((m) =>
+      setSmsMessages((prev) => {
+        const updated = prev.map((m) =>
           m.id === activeMessage.id
-            ? {
-                ...m,
-                inboundText: replyText.trim(),
-                timestamp: "Just now",
-                deliveryStatus: "Delivered",
-              }
+            ? m.thread
+              ? { ...m, thread: [...m.thread, newMsg], timestamp: "Just now" }
+              : {
+                  ...m,
+                  inboundText: replyText.trim(),
+                  timestamp: "Just now",
+                  deliveryStatus: "Delivered",
+                }
             : m
-        )
-      );
+        );
+        try {
+          localStorage.setItem("iwk_live_sms_messages", JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
     }
 
     setActiveMessage((prev) => ({
@@ -1605,7 +1709,7 @@ export default function UnifiedInbox() {
                           ...sms,
                           channel: "SMS",
                           lastSnippet: sms.inboundText,
-                          history: [
+                          history: sms.thread || [
                             { sender: "IWK Reminder SMS", text: `Peringatan: Akaun IWK ${sms.accountNo}. Sila jelaskan tunggakan anda.`, time: sms.timestamp },
                             { sender: "Customer SMS", text: sms.inboundText, time: sms.timestamp },
                           ],
@@ -2402,15 +2506,17 @@ export default function UnifiedInbox() {
                           const newSmsEntry = {
                             id: `SMS-${Date.now()}`,
                             customerName: "Active Contact (Direct Dispatch)",
-                            phone: num,
+                            phone: phoneCheck.e164,
                             accountNo: "6199-LIVE-" + Math.floor(1000 + Math.random() * 9000),
                             campaign: "Real-Time Twilio SMS",
-                            deliveryStatus: "Delivered",
-                            inboundText: msg,
+                            // accepted by Twilio; the carrier's delivery receipt is not tracked here (see Twilio Logs)
+                            deliveryStatus: "Sent",
+                            inboundText: "Awaiting customer reply…",
                             timestamp: "Just now",
-                            sentiment: "Positive",
-                            intentFlag: "Dispatched & Delivered",
-                            statusTone: "good",
+                            sentiment: "Neutral",
+                            intentFlag: "Awaiting Reply",
+                            statusTone: "warn",
+                            thread: [{ sender: "IWK Support Desk", text: msg, time: "Just now" }],
                           };
                           setSmsMessages((prev) => {
                             const updated = [newSmsEntry, ...prev];
