@@ -15,8 +15,8 @@ const AGENTS = [
     color: "#10b981", // Emerald Green
     description: "Courteous Careline tone, bilingual English & Malay mix.",
     voices: CONFIG.vapi.voices?.manglish || [
-      { id: "2LyhoWYWTvmqt5r3iFg4", label: "Voice 1", provider: "11labs", model: "eleven_v3" },
-      { id: "D1360BR3zCp9v0EXUpO4", label: "Voice 2", provider: "11labs", model: "eleven_v3" },
+      { id: "2LyhoWYWTvmqt5r3iFg4", label: "Manglish 1", provider: "11labs", model: "eleven_v3" },
+      { id: "D1360BR3zCp9v0EXUpO4", label: "Manglish 2", provider: "11labs", model: "eleven_v3" },
     ],
   },
   {
@@ -29,8 +29,8 @@ const AGENTS = [
     color: "#0b7fc4", // IWK Blue
     description: "Natural formal & colloquial Malaysian Malay recovery agent.",
     voices: CONFIG.vapi.voices?.malay || [
-      { id: "w2dXNwje6o73fWGIO6CD", label: "Voice 1", provider: "11labs", model: "eleven_multilingual_v2" },
-      { id: "kXQ1ZZosnfmkUToBIGhN", label: "Voice 2", provider: "11labs", model: "eleven_multilingual_v2" },
+      { id: "w2dXNwje6o73fWGIO6CD", label: "Malay 1", provider: "11labs", model: "eleven_multilingual_v2" },
+      { id: "kXQ1ZZosnfmkUToBIGhN", label: "Malay 2", provider: "11labs", model: "eleven_multilingual_v2" },
     ],
   },
 ];
