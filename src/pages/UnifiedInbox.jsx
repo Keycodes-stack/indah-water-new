@@ -1477,55 +1477,6 @@ export default function UnifiedInbox() {
           sub="Dedicated inbox for inbound queries, billing verification & live rep dispatch."
           actions={
             <div style={{ display: "flex", gap: 8 }}>
-              <button
-                type="button"
-                className="btn-ghost"
-                style={{ fontSize: 12, padding: "5px 12px", border: "1px solid var(--border)" }}
-                title="Fetch latest emails received by coutomerr@gmail.com"
-                onClick={async () => {
-                  try {
-                    const res = await fetch(apiUrl("/api/fetch-inbound-emails"));
-                    const data = await res.json();
-                    if (data.success && data.emails && data.emails.length > 0) {
-                      setCustomerEmails((prev) => {
-                        const updated = [...prev];
-                        [...data.emails].sort((x, y) => (x.uid || 0) - (y.uid || 0)).forEach((inbound) => {
-                          const idx = updated.findIndex(
-                            (t) => (t.senderEmail || t.email)?.toLowerCase() === inbound.senderEmail?.toLowerCase()
-                          );
-                          if (idx !== -1) {
-                            const merged = mergeInboundIntoThread(updated[idx], inbound);
-                            if (merged) {
-                              const { _newEntry, _stampedOnly, ...thread } = merged;
-                              updated[idx] = thread;
-                              if (_newEntry) {
-                                setActiveMessage((curActive) =>
-                                  curActive && (curActive.senderEmail || curActive.email)?.toLowerCase() === inbound.senderEmail?.toLowerCase()
-                                    ? { ...curActive, lastSnippet: inbound.inboundSnippet, history: [...(curActive.history || []), _newEntry] }
-                                    : curActive
-                                );
-                              }
-                            }
-                          } else {
-                            updated.unshift({
-                              ...inbound,
-                              history: (inbound.history || []).map((h) => ({ ...h, uid: inbound.uid })),
-                            });
-                          }
-                        });
-                        return updated;
-                      });
-                      alert(`✓ Synchronized live inbox from coutomerr@gmail.com!`);
-                    } else {
-                      alert("No new unread emails found in coutomerr@gmail.com");
-                    }
-                  } catch (err) {
-                    alert("Mail bridge service: " + err.message);
-                  }
-                }}
-              >
-                🔄 Fetch Inbound (coutomerr)
-              </button>
               {customerEmails.length > 0 && (
                 <button
                   type="button"
