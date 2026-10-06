@@ -3,6 +3,12 @@ import { useLocation, Link } from "react-router-dom";
 import Vapi from "@vapi-ai/web";
 import { PhoneCallIcon } from "../components/icons.jsx";
 import { CONFIG } from "../../config.js";
+import {
+  runWorkflow,
+  detectDistress,
+  getWorkflowSettings,
+  DEMO_WORKFLOWS,
+} from "../lib/workflowEngine.js";
 
 const AGENTS = [
   {
@@ -54,6 +60,11 @@ export default function Testing() {
   const [errorMessage, setErrorMessage] = useState("");
   const [duration, setDuration] = useState(0);
 
+  // Live distress alert (workflow: "Live Distress Call Email")
+  const [distressAlert, setDistressAlert] = useState(null); // { level: 'ok' | 'err' | 'warn', text }
+  const distressSentRef = useRef(false);
+  const transcriptTextRef = useRef([]);
+
   const vapiRef = useRef(null);
   const timerRef = useRef(null);
   const transcriptEndRef = useRef(null);
@@ -75,6 +86,48 @@ export default function Testing() {
     };
   }, []);
 
+  // Runs the "Live Distress Call Email" workflow once per call.
+  const fireDistressWorkflow = async (trigger, agent) => {
+    if (distressSentRef.current) return;
+    distressSentRef.current = true;
+
+    const settings = getWorkflowSettings();
+    if (settings.distressActive === false) {
+      setDistressAlert({ level: "warn", text: "Distress detected, but the \"Live Distress Call Email\" workflow is unpublished (Workflows page), so no email was sent." });
+      return;
+    }
+    if (!settings.testEmail) {
+      distressSentRef.current = false;
+      setDistressAlert({ level: "warn", text: "Distress detected, but no test email is set. Open Workflows → Live Distress Call Email → Run Workflow and enter the test email once." });
+      return;
+    }
+
+    setDistressAlert({ level: "warn", text: `Distress detected ("${trigger}") — sending alert email to ${settings.testEmail}…` });
+    const wf = DEMO_WORKFLOWS.find((w) => w.liveTrigger);
+    const failures = [];
+    await runWorkflow(wf, {
+      customers: [],
+      settings,
+      updateCustomer: () => {},
+      live: {
+        callId: `LIVE-${String(Date.now()).slice(-6)}`,
+        customerName: `Live test caller (${agent?.name || "Voice AI"})`,
+        reason: `Caller said "${trigger}" during live call testing with ${agent?.name || "the AI agent"}.`,
+        transcript: transcriptTextRef.current.slice(-8).join("\n"),
+      },
+      onLog: (e) => {
+        if (e.level === "err") failures.push(e.text);
+      },
+    });
+
+    if (failures.length) {
+      distressSentRef.current = false; // allow a retry on the next distressed sentence
+      setDistressAlert({ level: "err", text: failures[0] });
+    } else {
+      setDistressAlert({ level: "ok", text: `Distress alert email sent to ${settings.testEmail}.` });
+    }
+  };
+
   const handleStartCall = (agent) => {
     if (vapiRef.current) {
       try {
@@ -89,6 +142,9 @@ export default function Testing() {
     setTranscript([]);
     setErrorMessage("");
     setDuration(0);
+    setDistressAlert(null);
+    distressSentRef.current = false;
+    transcriptTextRef.current = [];
 
     try {
       const vapi = new Vapi(CONFIG.vapi.publicKey);
@@ -125,6 +181,11 @@ export default function Testing() {
             ...prev,
             { role: msg.role === "assistant" ? "bot" : "user", text: msg.transcript },
           ]);
+          transcriptTextRef.current.push(`${msg.role === "assistant" ? "Agent" : "Caller"}: ${msg.transcript}`);
+          if (msg.role !== "assistant") {
+            const hit = detectDistress(msg.transcript);
+            if (hit) fireDistressWorkflow(hit, agent);
+          }
         }
       });
 
@@ -478,6 +539,26 @@ export default function Testing() {
               {isEnded && !isConnecting && (
                 <div style={{ marginBottom: 16, color: "var(--text-dim)", fontSize: 13 }}>
                   Call completed.
+                </div>
+              )}
+
+              {distressAlert && (
+                <div
+                  role="status"
+                  style={{
+                    width: "100%",
+                    marginBottom: 14,
+                    padding: "9px 12px",
+                    borderRadius: 10,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    textAlign: "left",
+                    background: distressAlert.level === "ok" ? "rgba(16,185,129,0.12)" : distressAlert.level === "err" ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.14)",
+                    color: distressAlert.level === "ok" ? "#10b981" : distressAlert.level === "err" ? "#ef4444" : "#d99000",
+                    border: "1px solid currentColor",
+                  }}
+                >
+                  🚨 {distressAlert.text}
                 </div>
               )}
 
