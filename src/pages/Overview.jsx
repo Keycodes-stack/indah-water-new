@@ -265,7 +265,7 @@ export default function Overview() {
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4, flexWrap: "wrap", gap: 4 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>
-                {currentRecovery.casesCount} Recovered Cases
+                👥 {currentRecovery.casesCount} Recovered Cases
               </div>
               <Badge tone="good" style={{ fontSize: 9.5, padding: "2px 6px" }}>
                 {currentRecovery.targetAchievement} Target

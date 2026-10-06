@@ -417,7 +417,7 @@ export default function FollowUps() {
             alignItems: "center",
           }}
         >
-          <span>{notification}</span>
+          <span>✓ {notification}</span>
           <button
             className="btn-ghost"
             style={{ fontSize: 12, padding: "2px 6px" }}

@@ -188,7 +188,7 @@ function AudioPlayerBar({ row, getPresignedAudioUrl }) {
               border: "none",
             }}
           >
-            {loading ? "..." : isPlaying ? "Pause" : "Play"}
+            {loading ? "⏳" : isPlaying ? "⏸" : "▶"}
           </button>
 
           <button
@@ -231,7 +231,7 @@ function AudioPlayerBar({ row, getPresignedAudioUrl }) {
             borderRadius: 16,
           }}
         >
-          {downloading ? "Downloading..." : "Download .wav"}
+          {downloading ? "⏳ Downloading..." : "⬇ Download .wav"}
         </button>
       </div>
 
@@ -402,7 +402,7 @@ export default function ReviewPanel() {
     setTimeout(() => {
       setIsRunningAiAgent(false);
       setToast(
-        `AI Call dispatched to ${selectedAgent} for ${actionLog?.customer_name || "customer"}!`
+        `✓ AI Call dispatched to ${selectedAgent} for ${actionLog?.customer_name || "customer"}!`
       );
       setTimeout(() => setToast(null), 4000);
     }, 700);
@@ -414,7 +414,7 @@ export default function ReviewPanel() {
     setTimeout(() => {
       setIsMovingTeam(false);
       setToast(
-        `Case successfully moved to ${selectedTeam} for ${actionLog?.customer_name || "customer"}!`
+        `✓ Case successfully moved to ${selectedTeam} for ${actionLog?.customer_name || "customer"}!`
       );
       setTimeout(() => setToast(null), 4000);
     }, 700);
@@ -435,7 +435,7 @@ export default function ReviewPanel() {
     setTimeout(() => {
       setIsRunningWorkflows(false);
       setToast(
-        `${selectedList.length} automated workflow(s) executed for ${actionLog?.customer_name || "customer"}!`
+        `✓ ${selectedList.length} automated workflow(s) executed for ${actionLog?.customer_name || "customer"}!`
       );
       setTimeout(() => setToast(null), 4000);
     }, 700);
@@ -448,7 +448,7 @@ export default function ReviewPanel() {
     setTimeout(() => {
       setIsSendingMessage(false);
       setToast(
-        `${customChannel.toUpperCase()} Message sent successfully to ${actionLog?.customer_name || "customer"}!`
+        `✓ ${customChannel.toUpperCase()} Message sent successfully to ${actionLog?.customer_name || "customer"}!`
       );
       setTimeout(() => setToast(null), 4000);
     }, 700);
@@ -458,7 +458,7 @@ export default function ReviewPanel() {
   const handleApplyAction = () => {
     if (!actionLog) return;
     setToast(
-      `Action applied for ${actionLog.customer_name}! Case routed to ${selectedAgent} & ${selectedTeam}.`
+      `✓ Action applied for ${actionLog.customer_name}! Case routed to ${selectedAgent} & ${selectedTeam}.`
     );
     setActionLog(null);
     setTimeout(() => setToast(null), 4000);
@@ -558,7 +558,7 @@ export default function ReviewPanel() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>Review Panel</h1>
             <Badge tone="warn" style={{ fontSize: 12, padding: "3px 10px" }}>
-              Grey Zone Cases Only
+              🟡 Grey Zone Cases Only
             </Badge>
           </div>
           <p style={{ margin: "4px 0 0", color: "var(--text-dim)", fontSize: 13.5 }}>
@@ -624,7 +624,7 @@ export default function ReviewPanel() {
             }}
           />
           <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "var(--text-faint)" }}>
-            
+            🔍
           </span>
         </div>
 
@@ -728,7 +728,7 @@ export default function ReviewPanel() {
               fontSize: 12.5,
             }}
           >
-            <option value="ALL">All Dates</option>
+            <option value="ALL">📅 All Dates</option>
             <option value="TODAY">Today</option>
             <option value="YESTERDAY">Yesterday</option>
             <option value="LAST_7">Last 7 Days</option>
@@ -801,7 +801,7 @@ export default function ReviewPanel() {
 
         {error && !loading && (
           <div style={{ padding: 30, textAlign: "center", color: "var(--bad)", fontSize: 14 }}>
-            {error}
+            ⚠️ {error}
           </div>
         )}
 
@@ -853,7 +853,7 @@ export default function ReviewPanel() {
                           {(row.call_id || "ID-UNKNOWN").substring(0, 14)}
                         </div>
                         <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginTop: 3 }}>
-                          {formatTimestamp(row)}
+                          📅 {formatTimestamp(row)}
                         </div>
                       </td>
 
@@ -862,7 +862,7 @@ export default function ReviewPanel() {
                         <strong style={{ color: "var(--text)", fontSize: 13.5 }}>{row.customer_name || "Unknown Customer"}</strong>
                         {row.customer_phone && (
                           <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 2 }}>
-                            {row.customer_phone}
+                            📞 {row.customer_phone}
                           </div>
                         )}
                       </td>
@@ -945,7 +945,7 @@ export default function ReviewPanel() {
                             cursor: "pointer",
                           }}
                         >
-                          Take Action
+                          ⚡ Take Action
                         </button>
                       </td>
                     </tr>
@@ -1021,7 +1021,7 @@ export default function ReviewPanel() {
             {/* Option 1: Move to AI Agent Card with Dedicated Run Button */}
             <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "block", marginBottom: 6 }}>
-                Move to AI Agent
+                🤖 Move to AI Agent
               </label>
               <select
                 value={selectedAgent}
@@ -1066,7 +1066,7 @@ export default function ReviewPanel() {
                     opacity: isRunningAiAgent ? 0.7 : 1,
                   }}
                 >
-                  {isRunningAiAgent ? "Running..." : "Run"}
+                  {isRunningAiAgent ? "⏳ Running..." : "▶ Run"}
                 </button>
               </div>
             </div>
@@ -1074,7 +1074,7 @@ export default function ReviewPanel() {
             {/* Option 2: Move to Team Card with Dedicated Move Button */}
             <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "block", marginBottom: 6 }}>
-                Move to Team
+                👥 Move to Team
               </label>
               <select
                 value={selectedTeam}
@@ -1117,7 +1117,7 @@ export default function ReviewPanel() {
                     opacity: isMovingTeam ? 0.7 : 1,
                   }}
                 >
-                  {isMovingTeam ? "Moving..." : "Move"}
+                  {isMovingTeam ? "⏳ Moving..." : "↪ Move"}
                 </button>
               </div>
             </div>
@@ -1125,7 +1125,7 @@ export default function ReviewPanel() {
             {/* Option 3: Trigger Workflows Card with Dedicated Run Button */}
             <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "block", marginBottom: 8 }}>
-                Trigger Automated Workflows
+                ⚡ Trigger Automated Workflows
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12.5 }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
@@ -1176,7 +1176,7 @@ export default function ReviewPanel() {
                     opacity: isRunningWorkflows ? 0.7 : 1,
                   }}
                 >
-                  {isRunningWorkflows ? "Running..." : "Run"}
+                  {isRunningWorkflows ? "⏳ Running..." : "⚡ Run"}
                 </button>
               </div>
             </div>
@@ -1184,7 +1184,7 @@ export default function ReviewPanel() {
             {/* Option 4: Custom Message with Dedicated Send Button */}
             <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "block", marginBottom: 8 }}>
-                Send Custom Message
+                💬 Send Custom Message
               </label>
 
               {/* Channel Selector */}
@@ -1262,8 +1262,8 @@ export default function ReviewPanel() {
                   }}
                 >
                   {isSendingMessage
-                    ? "Sending..."
-                    : `Send ${customChannel.toUpperCase()} Message`}
+                    ? "⏳ Sending..."
+                    : `📤 Send ${customChannel.toUpperCase()} Message`}
                 </button>
               </div>
             </div>

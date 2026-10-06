@@ -12,7 +12,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-1",
         type: "TRIGGER",
-        title: "Trigger: After Call End",
+        title: "⚡ Trigger: After Call End",
         eventType: "After Call End",
         x: 80,
         y: 180,
@@ -26,7 +26,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-2",
         type: "FETCH_BILL",
-        title: "Fetch Bill Amount",
+        title: "💲 Fetch Bill Amount",
         accountQuery: "Pull Live Outstanding Balance & Due Date",
         x: 420,
         y: 180,
@@ -34,7 +34,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-3",
         type: "SEND_MESSAGE",
-        title: "Send SMS Details",
+        title: "💬 Send SMS Details",
         channel: "sms",
         messagePrompt: "Salam {{customer_name}}, your IWK account {{account_no}} has an outstanding balance of {{bill_amount}}. Here is your installment schedule link: {{installment_url}}.",
         x: 760,
@@ -43,7 +43,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-4",
         type: "UPDATE_FIELDS",
-        title: "Update Customer Fields",
+        title: "🏷️ Update Customer Fields",
         fieldName: "followup_status",
         fieldValue: "INSTALLMENT_SCHEDULED",
         x: 1100,
@@ -52,7 +52,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-5",
         type: "INTERNAL_TEAM",
-        title: "Send to Internal Team",
+        title: "👥 Send to Internal Team",
         team: "Hardship & Financial Assistance Desk",
         x: 1440,
         y: 180,
@@ -69,7 +69,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-1",
         type: "TRIGGER",
-        title: "Trigger: After Call End",
+        title: "⚡ Trigger: After Call End",
         eventType: "After Call End",
         x: 80,
         y: 180,
@@ -83,7 +83,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-2",
         type: "PUT_DND",
-        title: "Put in DND",
+        title: "🚫 Put in DND",
         dndType: "permanent",
         reason: "Explicit refusal & Do-Not-Call suppression requested",
         x: 420,
@@ -92,7 +92,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-3",
         type: "SEND_MESSAGE",
-        title: "Send Legal Pre-Notice",
+        title: "💬 Send Legal Pre-Notice",
         channel: "sms",
         messagePrompt: "PERINGATAN MESRA IWK: Akaun {{account_no}} telah dimajukan ke Unit Tindakan Khas. Sila jelaskan tunggakan atau hubungi 03-20803888.",
         x: 760,
@@ -101,7 +101,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-4",
         type: "CALL_AGENT",
-        title: "Trigger AI Agent Call",
+        title: "🤖 Trigger AI Agent Call",
         agent: "Hakim AI agent (Legal & Severe Collections)",
         contextPrompt: "Customer explicitly refused payment on previous call. Initiate formal recovery statement and explain legal escalation steps.",
         x: 1100,
@@ -110,7 +110,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-5",
         type: "INTERNAL_TEAM",
-        title: "Send to Internal Team",
+        title: "👥 Send to Internal Team",
         team: "Legal & Recovery Desk",
         x: 1440,
         y: 180,
@@ -127,7 +127,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-1",
         type: "TRIGGER",
-        title: "Trigger: After Call End",
+        title: "⚡ Trigger: After Call End",
         eventType: "After Call End",
         x: 80,
         y: 180,
@@ -141,7 +141,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-2",
         type: "VERIFY_BILL",
-        title: "Verify Bill Paid",
+        title: "🔍 Verify Bill Paid",
         condition: "Check ledger payment transaction & receipt status",
         x: 420,
         y: 180,
@@ -149,7 +149,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-3",
         type: "FETCH_BILL",
-        title: "Fetch Bill Amount",
+        title: "💲 Fetch Bill Amount",
         accountQuery: "Query ledger for itemized dispute breakdown",
         x: 760,
         y: 180,
@@ -157,7 +157,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-4",
         type: "INTERNAL_TEAM",
-        title: "Send to Internal Team",
+        title: "👥 Send to Internal Team",
         team: "QA depart (records verify)",
         x: 1100,
         y: 180,
@@ -174,7 +174,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-1",
         type: "TRIGGER",
-        title: "Trigger: Webhook Received",
+        title: "⚡ Trigger: Webhook Received",
         eventType: "Webhook Received",
         x: 80,
         y: 180,
@@ -188,7 +188,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-2",
         type: "VERIFY_BILL",
-        title: "Verify Bill Paid",
+        title: "🔍 Verify Bill Paid",
         condition: "Verify FPX / JomPAY transaction reference ID",
         x: 420,
         y: 180,
@@ -196,7 +196,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-3",
         type: "SEND_MESSAGE",
-        title: "Send WhatsApp Receipt",
+        title: "💬 Send WhatsApp Receipt",
         channel: "whatsapp",
         messagePrompt: "Terima kasih {{customer_name}}! Pembayaran sebanyak {{paid_amount}} untuk akaun IWK {{account_no}} telah berjaya dikemas kini.",
         x: 760,
@@ -205,7 +205,7 @@ const PREBUILT_WORKFLOWS = [
       {
         id: "n-4",
         type: "UPDATE_FIELDS",
-        title: "Update Customer Fields",
+        title: "🏷️ Update Customer Fields",
         fieldName: "account_status",
         fieldValue: "PAID_IN_FULL",
         x: 1100,
@@ -219,49 +219,49 @@ const NODE_TYPES = [
   {
     type: "SEND_MESSAGE",
     title: "Send SMS / Email / WhatsApp",
-    icon: "",
+    icon: "💬",
     color: "#10b981",
     description: "Dispatch automated SMS, Email, or WhatsApp text notification.",
   },
   {
     type: "CALL_AGENT",
     title: "Call Agent Trigger",
-    icon: "",
+    icon: "🤖",
     color: "#8b5cf6",
     description: "Trigger AI voice agent with custom context and prompts.",
   },
   {
     type: "INTERNAL_TEAM",
     title: "Send to Internal Team",
-    icon: "",
+    icon: "👥",
     color: "#3b82f6",
     description: "Route case lead to QA, Legal, Dispute, or Supervisor desks.",
   },
   {
     type: "VERIFY_BILL",
     title: "Verify Bill Paid",
-    icon: "",
+    icon: "🔍",
     color: "#06b6d4",
     description: "Verify payment ledger and FPX / JomPAY transaction status.",
   },
   {
     type: "FETCH_BILL",
     title: "Fetch Bill Amount",
-    icon: "",
+    icon: "💲",
     color: "#f59e0b",
     description: "Query live API for outstanding balance and itemized bill details.",
   },
   {
     type: "UPDATE_FIELDS",
     title: "Update Customer Fields",
-    icon: "",
+    icon: "🏷️",
     color: "#ec4899",
     description: "Update account status, priority tags, and customer notes.",
   },
   {
     type: "PUT_DND",
     title: "Put in DND",
-    icon: "",
+    icon: "🚫",
     color: "#ef4444",
     description: "Add customer directly to Do Not Disturb registry.",
   },
@@ -421,7 +421,7 @@ export default function Workflows() {
         {
           id: `n-${Date.now()}-1`,
           type: "TRIGGER",
-          title: "Trigger: After Call End",
+          title: "⚡ Trigger: After Call End",
           eventType: "After Call End",
           x: 100,
           y: 200,
@@ -435,7 +435,7 @@ export default function Workflows() {
         {
           id: `n-${Date.now()}-2`,
           type: "SEND_MESSAGE",
-          title: "Send SMS Notification",
+          title: "💬 Send SMS Notification",
           channel: "sms",
           messagePrompt: "Salam {{customer_name}}, regarding your IWK account {{account_no}}...",
           x: 460,
@@ -446,7 +446,7 @@ export default function Workflows() {
     setWorkflowsList([newWf, ...workflowsList]);
     setActiveWfId(newId);
     setSelectedNodeId(null);
-    setToast("New Workflow Created!");
+    setToast("✓ New Workflow Created!");
     setTimeout(() => setToast(null), 3000);
   };
 
@@ -456,13 +456,13 @@ export default function Workflows() {
     setWorkflowsList((prev) =>
       prev.map((w) => (w.id === activeWf.id ? { ...w, status: nextStatus } : w))
     );
-    setToast(`Workflow status set to ${nextStatus}!`);
+    setToast(`✓ Workflow status set to ${nextStatus}!`);
     setTimeout(() => setToast(null), 3000);
   };
 
   // Save Workflow
   const handleSaveWorkflow = () => {
-    setToast(`Workflow "${activeWf.name}" saved successfully!`);
+    setToast(`✓ Workflow "${activeWf.name}" saved successfully!`);
     setTimeout(() => setToast(null), 3000);
   };
 
@@ -527,7 +527,7 @@ export default function Workflows() {
     setShowAddNodeModal(false);
     setInsertIndex(null);
     setSelectedNodeId(newNodeId);
-    setToast(`Added ${nodeTemplate.title} node!`);
+    setToast(`✓ Added ${nodeTemplate.title} node!`);
     setTimeout(() => setToast(null), 3000);
   };
 
@@ -543,7 +543,7 @@ export default function Workflows() {
       prev.map((w) => (w.id === activeWf.id ? { ...w, nodes: updatedNodes } : w))
     );
     if (selectedNodeId === nodeId) setSelectedNodeId(null);
-    setToast("Node removed!");
+    setToast("✓ Node removed!");
     setTimeout(() => setToast(null), 3000);
   };
 
@@ -700,7 +700,7 @@ export default function Workflows() {
                   gap: 8,
                 }}
               >
-                Create New Workflow
+                ➕ Create New Workflow
               </button>
 
               {/* Cards List */}
@@ -737,7 +737,7 @@ export default function Workflows() {
                         {wf.description}
                       </p>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 10.5, color: "var(--text-faint)" }}>
-                        <span>{wf.nodes.length} Nodes</span>
+                        <span>⚡ {wf.nodes.length} Nodes</span>
                         <span style={{ color: "var(--brand)", fontWeight: 600 }}>{wf.category}</span>
                       </div>
                     </div>
@@ -811,7 +811,7 @@ export default function Workflows() {
                         cursor: "pointer",
                       }}
                     >
-                      
+                      ⚡
                     </div>
                   );
                 })}
@@ -895,7 +895,7 @@ export default function Workflows() {
                 }}
               />
               <Badge tone={activeWf.status === "ACTIVE" ? "good" : "warn"}>
-                {activeWf.status === "ACTIVE" ? "ACTIVE" : "DRAFT"}
+                {activeWf.status === "ACTIVE" ? "🟢 ACTIVE" : "🟡 DRAFT"}
               </Badge>
             </div>
 
@@ -906,7 +906,7 @@ export default function Workflows() {
                 onClick={handleTogglePublish}
                 style={{ fontSize: 12, fontWeight: 700 }}
               >
-                {activeWf.status === "ACTIVE" ? "Unpublish to Draft" : " Publish Workflow"}
+                {activeWf.status === "ACTIVE" ? "Unpublish to Draft" : "⚡ Publish Workflow"}
               </button>
 
               <button
@@ -918,7 +918,7 @@ export default function Workflows() {
                 }}
                 style={{ fontSize: 12, fontWeight: 700, color: "var(--brand)" }}
               >
-                Add Node
+                ➕ Add Node
               </button>
 
               <button
@@ -936,7 +936,7 @@ export default function Workflows() {
                   cursor: "pointer",
                 }}
               >
-                Save Workflow
+                💾 Save Workflow
               </button>
             </div>
           </div>
@@ -1157,7 +1157,7 @@ export default function Workflows() {
                           opacity: 0.8,
                         }}
                       >
-                        Delete
+                        🗑️
                       </button>
                     )}
                   </div>
@@ -1340,7 +1340,7 @@ export default function Workflows() {
                 cursor: "pointer",
               }}
             >
-              Fit View
+              🎯 Fit View
             </button>
           </div>
         </div>
@@ -1429,7 +1429,7 @@ export default function Workflows() {
             {/* Flow Variables Section */}
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
               <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--brand)", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>Available Flow Variables</span>
+                <span>⚡ Available Flow Variables</span>
                 <span style={{ fontSize: 10, color: "var(--text-dim)" }}>Click to Insert</span>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -1459,7 +1459,7 @@ export default function Workflows() {
             {/* Dynamic Config Controls based on Node Type */}
             <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: "var(--text)", marginBottom: 10 }}>
-                Node Configuration Options
+                ⚙️ Node Configuration Options
               </div>
 
               {selectedNode.type === "TRIGGER" && (
@@ -1482,7 +1482,7 @@ export default function Workflows() {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "var(--surface-2)", padding: 12, borderRadius: 8 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--brand)" }}>
-                      Call Fields Taxonomy Filters
+                      🎯 Call Fields Taxonomy Filters
                     </div>
 
                     <div>

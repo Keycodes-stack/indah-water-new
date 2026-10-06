@@ -102,7 +102,7 @@ export default function FieldsStructure() {
         </div>
 
         <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)", fontSize: 13, color: "var(--text-dim)", lineHeight: 1.5 }}>
-          <strong>Important Distinction:</strong> A customer who cannot afford the bill should <em>not</em> automatically be classified as Negative. They may still have Positive intent but require hardship assistance. Similarly, someone who disputes the bill amount may have Conditional intent rather than Negative intent.
+          💡 <strong>Important Distinction:</strong> A customer who cannot afford the bill should <em>not</em> automatically be classified as Negative. They may still have Positive intent but require hardship assistance. Similarly, someone who disputes the bill amount may have Conditional intent rather than Negative intent.
         </div>
       </Panel>
 
@@ -186,7 +186,7 @@ export default function FieldsStructure() {
         </div>
 
         <div style={{ background: "rgba(250, 178, 25, 0.1)", border: "1px solid rgba(250, 178, 25, 0.3)", padding: 14, borderRadius: 10, fontSize: 13, color: "var(--text)" }}>
-          <strong>Important Data Rule:</strong> Do not classify someone as poor, unemployed, or financially distressed based on assumptions. The AI should only assign these labels when the customer explicitly states or clearly confirms the situation.
+          ⚠️ <strong>Important Data Rule:</strong> Do not classify someone as poor, unemployed, or financially distressed based on assumptions. The AI should only assign these labels when the customer explicitly states or clearly confirms the situation.
         </div>
       </Panel>
 
@@ -197,7 +197,7 @@ export default function FieldsStructure() {
           {/* Green Zone */}
           <div style={{ background: "var(--surface)", border: "2px solid #10b981", borderRadius: 12, padding: 18 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span className="badge ok" style={{ fontSize: 11 }}>GREEN</span>
+              <span style={{ fontSize: 20 }}>🟢</span>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#10b981" }}>Green Zone — Normal Handling</h3>
             </div>
             <p style={{ fontSize: 12.5, color: "var(--text-dim)", lineHeight: 1.5, margin: "0 0 12px" }}>
@@ -214,7 +214,7 @@ export default function FieldsStructure() {
           {/* Grey Zone */}
           <div style={{ background: "var(--surface)", border: "2px solid #f59e0b", borderRadius: 12, padding: 18 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span className="badge warn" style={{ fontSize: 11 }}>GREY</span>
+              <span style={{ fontSize: 20 }}>🟡</span>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#d97706" }}>Grey Zone — Review Required</h3>
             </div>
             <p style={{ fontSize: 12.5, color: "var(--text-dim)", lineHeight: 1.5, margin: "0 0 12px" }}>
@@ -231,7 +231,7 @@ export default function FieldsStructure() {
           {/* Red Zone */}
           <div style={{ background: "var(--surface)", border: "2px solid #ef4444", borderRadius: 12, padding: 18 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span className="badge critical" style={{ fontSize: 11 }}>RED</span>
+              <span style={{ fontSize: 20 }}>🔴</span>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#dc2626" }}>Red Zone — Human-Only Handling</h3>
             </div>
             <p style={{ fontSize: 12.5, color: "var(--text-dim)", lineHeight: 1.5, margin: "0 0 12px" }}>

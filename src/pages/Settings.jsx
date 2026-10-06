@@ -203,7 +203,7 @@ export default function Settings() {
                 background: currentTheme === "light" ? "var(--brand-soft)" : "var(--surface)",
               }}
             >
-              <span style={{ fontSize: 13, fontWeight: 700 }}>Light</span>
+              <span style={{ fontSize: 24 }}>☀️</span>
               <span style={{ fontWeight: 600, color: "var(--text)" }}>White Theme (Lite)</span>
               <span style={{ fontSize: 11.5, color: "var(--text-dim)", textAlign: "center" }}>Clean white surfaces &amp; light background</span>
             </button>
@@ -222,7 +222,7 @@ export default function Settings() {
                 background: currentTheme === "dark" ? "var(--brand-soft)" : "var(--surface)",
               }}
             >
-              <span style={{ fontSize: 13, fontWeight: 700 }}>Dark</span>
+              <span style={{ fontSize: 24 }}>🌙</span>
               <span style={{ fontWeight: 600, color: "var(--text)" }}>Dark Theme</span>
               <span style={{ fontSize: 11.5, color: "var(--text-dim)", textAlign: "center" }}>Sleek dark mode for low-light environments</span>
             </button>
@@ -253,7 +253,7 @@ export default function Settings() {
 
         {supervisorSuccess && (
           <div style={{ padding: "8px 14px", background: "var(--good-soft)", color: "var(--good)", borderRadius: 6, fontSize: 13, marginBottom: 12 }}>
-            {supervisorSuccess}
+            ✓ {supervisorSuccess}
           </div>
         )}
 
@@ -325,7 +325,7 @@ export default function Settings() {
           <form onSubmit={handleCreateSupervisor}>
             {supervisorError && (
               <div style={{ padding: "8px 12px", background: "var(--bad-soft)", color: "var(--bad)", borderRadius: 6, fontSize: 13, marginBottom: 12 }}>
-                {supervisorError}
+                ⚠ {supervisorError}
               </div>
             )}
             <div className="form-grid" style={{ gap: 12 }}>

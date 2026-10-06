@@ -192,7 +192,7 @@ function AudioPlayerBar({ row, getPresignedAudioUrl }) {
             }}
             title={isPlaying ? "Pause Recording" : "Play Recording"}
           >
-            {loading ? "..." : isPlaying ? "Pause" : "Play"}
+            {loading ? "⏳" : isPlaying ? "⏸" : "▶"}
           </button>
 
           {/* Rewind 10s */}
@@ -244,7 +244,7 @@ function AudioPlayerBar({ row, getPresignedAudioUrl }) {
             cursor: downloading || !audioUrl ? "wait" : "pointer",
           }}
         >
-          <span>{downloading ? "Downloading..." : "Download .wav"}</span>
+          <span>{downloading ? "⏳ Downloading..." : "⬇ Download .wav"}</span>
         </button>
       </div>
 
@@ -616,7 +616,7 @@ export default function CallLogs() {
               gap: 6,
             }}
           >
-            Fields & Insights Structure →
+            📖 Fields &amp; Insights Structure →
           </Link>
 
           <button
@@ -661,7 +661,7 @@ export default function CallLogs() {
             }}
           />
           <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "var(--text-faint)" }}>
-            
+            🔍
           </span>
         </div>
 
@@ -683,9 +683,9 @@ export default function CallLogs() {
             }}
           >
             <option value="ALL">All Priorities</option>
-            <option value="GREEN">GREEN (Normal)</option>
-            <option value="GREY">GREY (Review)</option>
-            <option value="RED">RED (Human Only)</option>
+            <option value="GREEN">🟢 GREEN (Normal)</option>
+            <option value="GREY">🟡 GREY (Review)</option>
+            <option value="RED">🔴 RED (Human Only)</option>
           </select>
         </div>
 
@@ -789,7 +789,7 @@ export default function CallLogs() {
               fontSize: 12.5,
             }}
           >
-            <option value="ALL">All Dates</option>
+            <option value="ALL">📅 All Dates</option>
             <option value="TODAY">Today</option>
             <option value="YESTERDAY">Yesterday</option>
             <option value="LAST_7">Last 7 Days</option>
@@ -885,7 +885,7 @@ export default function CallLogs() {
 
         {error && !loading && (
           <div style={{ padding: 30, textAlign: "center", color: "var(--bad)", fontSize: 14 }}>
-            Error loading webhook data: {error}
+            ⚠️ Error loading webhook data: {error}
           </div>
         )}
 
@@ -984,10 +984,10 @@ export default function CallLogs() {
                         >
                           <span>
                             {loadingAudioId === row.call_id
-                              ? "Loading..."
+                              ? "⏳ Loading..."
                               : isThisPlaying
-                              ? "Pause"
-                              : "Play"}
+                              ? "⏸ Pause"
+                              : "▶ Play"}
                           </span>
                           {isThisPlaying && (
                             <span style={{ display: "inline-flex", gap: 2 }}>

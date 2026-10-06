@@ -428,7 +428,7 @@ export default function VoiceAI() {
                         className={`play-btn${open ? " playing" : ""}`}
                         onClick={(e) => { e.stopPropagation(); toggle(r.id, true); }}
                       >
-                        {open ? "Open" : "Play"}
+                        <span>{open ? "❚❚" : "▶"}</span> {open ? "Open" : "Play"}
                       </button>
                     ) : <span className="dim">—</span>}
                   </td>

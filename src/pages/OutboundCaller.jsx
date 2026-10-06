@@ -481,7 +481,7 @@ export default function OutboundCaller() {
                         onClick={() => handleCallClick(lead)}
                         title={`Place call to ${lead.name}`}
                       >
-                        Call Now
+                        <span style={{ marginRight: 5 }}>✆</span> Call Now
                       </button>
                     </td>
                   </tr>
