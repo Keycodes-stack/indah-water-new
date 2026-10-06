@@ -186,7 +186,9 @@ const IMAP_CONFIG = {
 // Reads the newest inbound customer emails. `holder.connection` lets the caller close the
 // IMAP connection if the deadline passes first.
 async function readInbox(holder) {
-    const connection = await imaps.connect(IMAP_CONFIG);
+    const pending = imaps.connect(IMAP_CONFIG);
+    holder.pending = pending; // lets the caller close it even if the deadline passes mid-connect
+    const connection = await pending;
     holder.connection = connection;
     await connection.openBox('INBOX');
 
@@ -288,9 +290,20 @@ async function readInbox(holder) {
 // deadline — a slow Gmail answers with an empty list instead of hanging the page or the function.
 let inboxInFlight = null;
 let inboxCache = { at: 0, emails: [] };
+// Gmail allows only ~15 simultaneous IMAP sessions. When it says so, stop asking for a minute.
+let inboxCooldownUntil = 0;
+
+// Fully close an IMAP connection (LOGOUT + destroy the socket) so Gmail frees the session at once.
+function closeImap(conn) {
+  try { conn.end(); } catch (_) {}
+  try { conn.imap && conn.imap.destroy(); } catch (_) {}
+}
 
 // Endpoint: Fetch Real Inbound Emails sent to coutomerr@gmail.com
 app.get('/api/fetch-inbound-emails', async (req, res) => {
+  if (Date.now() < inboxCooldownUntil) {
+    return res.json({ success: true, emails: [], imap_error: 'Gmail IMAP is busy (too many connections) — retrying shortly', cooldown: true });
+  }
   if (Date.now() - inboxCache.at < INBOX_CACHE_MS) {
     return res.json({ success: true, emails: inboxCache.emails, cached: true });
   }
@@ -307,11 +320,13 @@ app.get('/api/fetch-inbound-emails', async (req, res) => {
         return { success: true, emails };
       } catch (err) {
         console.error('[IMAP ERROR]', err.message);
+        if (/too many simultaneous/i.test(err.message)) inboxCooldownUntil = Date.now() + 60000;
         // Return empty success so the frontend polling doesn't show errors
         return { success: true, emails: [], imap_error: err.message };
       } finally {
         clearTimeout(timer);
-        try { holder.connection && holder.connection.end(); } catch (_) {}
+        if (holder.connection) closeImap(holder.connection);
+        else if (holder.pending) holder.pending.then(closeImap).catch(() => {});
         inboxInFlight = null;
       }
     })();
