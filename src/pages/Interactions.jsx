@@ -404,8 +404,8 @@ export default function Interactions() {
   const getChannelIcon = (type) => {
     if (type === "Voice") return <PhoneCallIcon size={16} />;
     if (type === "WhatsApp") return <InboxIcon size={16} />;
-    if (type === "Email") return <span>✉️</span>;
-    return <span>📱</span>;
+    if (type === "Email") return <span>Email</span>;
+    return <span>SMS/Voice</span>;
   };
 
   // Split raw transcript into structured lines
@@ -442,7 +442,7 @@ export default function Interactions() {
             boxShadow: "0 10px 25px rgba(16,185,129,0.3)",
           }}
         >
-          ✓ QA Rating & Feedback saved successfully!
+          QA Rating & Feedback saved successfully!
         </div>
       )}
 
@@ -527,7 +527,7 @@ export default function Interactions() {
                 color: "var(--text-faint)",
               }}
             >
-              🔍
+              
             </span>
           </div>
 
@@ -557,9 +557,9 @@ export default function Interactions() {
             <span style={{ fontSize: 11, color: "var(--text-faint)", fontWeight: 700 }}>Priority:</span>
             {[
               { id: "ALL", label: "All" },
-              { id: "GREEN", label: "🟢 Green" },
-              { id: "GREY", label: "🟡 Grey" },
-              { id: "RED", label: "🔴 Red" },
+              { id: "GREEN", label: "Green" },
+              { id: "GREY", label: "Grey" },
+              { id: "RED", label: "Red" },
             ].map((p) => (
               <button
                 key={p.id}
@@ -687,7 +687,7 @@ export default function Interactions() {
                       fontSize: 18,
                     }}
                   >
-                    📞
+                    Call
                   </div>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -758,7 +758,7 @@ export default function Interactions() {
                     }}
                     title={isPlaying ? "Pause recording" : "Play recording"}
                   >
-                    {isPlaying ? "⏸" : "▶"}
+                    {isPlaying ? "Pause" : "Play"}
                   </button>
 
                   <div style={{ flex: 1 }}>
@@ -946,16 +946,16 @@ export default function Interactions() {
                     <strong style={{ fontSize: 15, color: "var(--text)" }}>Milestone Event Timeline</strong>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
                       <div style={{ fontSize: 13 }}>
-                        ⏱ <strong>00:00:</strong> Call connected via Vapi telephony bridge
+                        <strong>00:00:</strong> Call connected via Vapi telephony bridge
                       </div>
                       <div style={{ fontSize: 13 }}>
-                        🤖 <strong>00:02:</strong> Assistant {activeItem.assistant} initiated greeting
+                        <strong>00:02:</strong> Assistant {activeItem.assistant} initiated greeting
                       </div>
                       <div style={{ fontSize: 13 }}>
-                        ✅ <strong>00:41:</strong> Customer intent classified as {activeItem.customer_intent}
+                        <strong>00:41:</strong> Customer intent classified as {activeItem.customer_intent}
                       </div>
                       <div style={{ fontSize: 13 }}>
-                        🏁 <strong>01:46:</strong> Call outcome set to {activeItem.call_outcome}
+                        <strong>01:46:</strong> Call outcome set to {activeItem.call_outcome}
                       </div>
                     </div>
                   </div>
@@ -1067,11 +1067,11 @@ export default function Interactions() {
                   color: "var(--text)",
                 }}
               >
-                <option value={5}>⭐⭐⭐⭐⭐ Excellent (5/5)</option>
-                <option value={4}>⭐⭐⭐⭐ Good (4/5)</option>
-                <option value={3}>⭐⭐⭐ Average (3/5)</option>
-                <option value={2}>⭐⭐ Needs Review (2/5)</option>
-                <option value={1}>⭐ Poor (1/5)</option>
+                <option value={5}>Excellent (5/5)</option>
+                <option value={4}>Good (4/5)</option>
+                <option value={3}>Average (3/5)</option>
+                <option value={2}>Needs Review (2/5)</option>
+                <option value={1}>Poor (1/5)</option>
               </select>
             </div>
 
