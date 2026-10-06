@@ -377,7 +377,8 @@ async function parseInbound(recent) {
               handledBy: 'IWK Support Desk',
               accountNo: '6199-' + Math.floor(1000 + Math.random() * 9000) + '-LIVE',
               subject: mail.subject || 'Inbound Inquiry',
-              sentDate: timeStr,
+              sentDate: timeStr, // server-side clock (UTC on Netlify) — kept for older clients
+              receivedAt: emailDate.toISOString(), // real moment the email was sent; shown in the viewer's local time
               inboundSnippet: cleanText.slice(0, 160) || 'Customer reply received',
               lastSnippet: cleanText.slice(0, 160) || 'Customer reply received',
               openStatus: 'Received (Inbound)',

@@ -244,9 +244,39 @@ const SENTIMENT_CHART_DATA = [
    (e.g. "Received and thanks.") still gets both shown. Older entries saved before uids were
    tracked are matched once by text and then stamped with the uid. Returns the updated thread,
    or null when the message is already in the thread. */
+/* A moment in time as the VIEWER's local clock, e.g. "Today, 12:43 AM" / "06 Oct, 11:20 PM".
+   (The server runs in UTC, so it sends an ISO timestamp instead of a ready-made clock string.) */
+const emailTimeLabel = (iso, fallback = "Just now") => {
+  const d = new Date(iso);
+  if (!iso || Number.isNaN(d.getTime())) return fallback;
+  const t = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date().toDateString() === d.toDateString()
+    ? `Today, ${t}`
+    : `${d.toLocaleDateString([], { day: "2-digit", month: "short" })}, ${t}`;
+};
+
+/* A brand-new thread built from an inbound email, with every time shown in local time. */
+function newThreadFromInbound(inbound) {
+  const when = emailTimeLabel(inbound.receivedAt, inbound.sentDate || "Just now");
+  return {
+    ...inbound,
+    sentDate: when,
+    history: (inbound.history || []).map((h) => ({ ...h, uid: inbound.uid, time: when })),
+  };
+}
+
 function mergeInboundIntoThread(thread, inbound) {
   const history = thread.history || [];
-  if (history.some((h) => h.uid != null && h.uid === inbound.uid)) return null;
+  const when = emailTimeLabel(inbound.receivedAt, inbound.sentDate || "Just now");
+
+  const known = history.findIndex((h) => h.uid != null && h.uid === inbound.uid);
+  if (known !== -1) {
+    // already shown; if it was saved with the server's UTC clock, correct its time to the viewer's local time
+    if (inbound.receivedAt && history[known].time !== when) {
+      return { ...thread, history: history.map((h, i) => (i === known ? { ...h, time: when } : h)), _stampedOnly: true };
+    }
+    return null;
+  }
 
   const text = (inbound.inboundSnippet || "").trim();
   const legacyIdx = history.findIndex(
@@ -254,15 +284,20 @@ function mergeInboundIntoThread(thread, inbound) {
   );
   if (legacyIdx !== -1) {
     // already shown before uids existed — just remember its uid
-    return { ...thread, history: history.map((h, i) => (i === legacyIdx ? { ...h, uid: inbound.uid } : h)), _stampedOnly: true };
+    // also fixes the time of an old entry that was saved with the server's (UTC) clock
+    return {
+      ...thread,
+      history: history.map((h, i) => (i === legacyIdx ? { ...h, uid: inbound.uid, ...(inbound.receivedAt ? { time: when } : {}) } : h)),
+      _stampedOnly: true,
+    };
   }
 
-  const entry = { sender: `Customer (${inbound.senderEmail})`, text: inbound.inboundSnippet, time: inbound.sentDate || "Just now", uid: inbound.uid };
+  const entry = { sender: `Customer (${inbound.senderEmail})`, text: inbound.inboundSnippet, time: when, uid: inbound.uid };
   return {
     ...thread,
     inboundSnippet: inbound.inboundSnippet,
     lastSnippet: inbound.inboundSnippet,
-    sentDate: inbound.sentDate || "Just now",
+    sentDate: when,
     openStatus: "Received (Inbound)",
     history: [...history, entry],
     _newEntry: entry,
@@ -480,10 +515,7 @@ export default function UnifiedInbox() {
               } else {
                 // Completely new customer email
                 hasChanges = true;
-                updated.unshift({
-                  ...inbound,
-                  history: (inbound.history || []).map((h) => ({ ...h, uid: inbound.uid })),
-                });
+                updated.unshift(newThreadFromInbound(inbound));
               }
             });
 
