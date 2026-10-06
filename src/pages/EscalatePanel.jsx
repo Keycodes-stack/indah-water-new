@@ -160,7 +160,7 @@ function AudioPlayerBar({ row, getPresignedAudioUrl }) {
           minWidth: 54,
         }}
       >
-        {loadingAudio ? "⏳" : playing ? "⏸ Pause" : "▶ Play"}
+        {loadingAudio ? "..." : playing ? "Pause" : "Play"}
       </button>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -188,7 +188,7 @@ function AudioPlayerBar({ row, getPresignedAudioUrl }) {
         title="Download Wav Recording"
         style={{ padding: "4px 8px", fontSize: 11, borderRadius: 6, cursor: "pointer" }}
       >
-        {downloading ? "⏳" : "⬇ Wav"}
+        {downloading ? "..." : "Wav"}
       </button>
     </div>
   );
@@ -288,14 +288,14 @@ export default function EscalatePanel() {
 
   const handleBulkAiEscalate = () => {
     if (selectedIds.size === 0) {
-      setToast("⚠️ Please select at least one escalation case first.");
+      setToast("Please select at least one escalation case first.");
       setTimeout(() => setToast(null), 3500);
       return;
     }
     setIsBulkAiRunning(true);
     setTimeout(() => {
       setIsBulkAiRunning(false);
-      setToast(`🤖 AI executed escalation process for ${selectedIds.size} selected case(s). Logs updated.`);
+      setToast(`AI executed escalation process for ${selectedIds.size} selected case(s). Logs updated.`);
       setSelectedIds(new Set());
       setTimeout(() => setToast(null), 5000);
     }, 1400);
@@ -419,12 +419,12 @@ export default function EscalatePanel() {
 
   // Direct Quick Action Handlers
   const handleQuickDND = (row) => {
-    setToast(`🚫 Lead ${row.customer_name || row.call_id.substring(0, 8)} added directly to DND list!`);
+    setToast(`Lead ${row.customer_name || row.call_id.substring(0, 8)} added directly to DND list!`);
     setTimeout(() => setToast(null), 4000);
   };
 
   const handleQuickCall = (row) => {
-    setToast(`📞 Direct call dispatched to ${row.customer_name || "customer"} (${row.customer_phone || row.call_id.substring(0, 8)})!`);
+    setToast(`Direct call dispatched to ${row.customer_name || "customer"} (${row.customer_phone || row.call_id.substring(0, 8)})!`);
     setTimeout(() => setToast(null), 4000);
   };
 
@@ -451,7 +451,7 @@ export default function EscalatePanel() {
     setIsRunningAiAgent(true);
     setTimeout(() => {
       setIsRunningAiAgent(false);
-      setToast(`✓ High-Priority Call dispatched to ${selectedAgent} for ${actionLog?.customer_name || "customer"}!`);
+      setToast(`High-Priority Call dispatched to ${selectedAgent} for ${actionLog?.customer_name || "customer"}!`);
       setTimeout(() => setToast(null), 4000);
     }, 700);
   };
@@ -461,7 +461,7 @@ export default function EscalatePanel() {
     setIsMovingTeam(true);
     setTimeout(() => {
       setIsMovingTeam(false);
-      setToast(`✓ Case escalated to ${selectedTeam} for ${actionLog?.customer_name || "customer"}!`);
+      setToast(`Case escalated to ${selectedTeam} for ${actionLog?.customer_name || "customer"}!`);
       setTimeout(() => setToast(null), 4000);
     }, 700);
   };
@@ -480,7 +480,7 @@ export default function EscalatePanel() {
     setIsRunningWorkflows(true);
     setTimeout(() => {
       setIsRunningWorkflows(false);
-      setToast(`✓ ${selectedList.length} escalation workflow(s) executed for ${actionLog?.customer_name || "customer"}!`);
+      setToast(`${selectedList.length} escalation workflow(s) executed for ${actionLog?.customer_name || "customer"}!`);
       setTimeout(() => setToast(null), 4000);
     }, 700);
   };
@@ -490,7 +490,7 @@ export default function EscalatePanel() {
     setIsApplyingDnd(true);
     setTimeout(() => {
       setIsApplyingDnd(false);
-      setToast(`🚫 Lead ${actionLog?.customer_name || "customer"} registered under ${dndType.toUpperCase()} DND!`);
+      setToast(`Lead ${actionLog?.customer_name || "customer"} registered under ${dndType.toUpperCase()} DND!`);
       setTimeout(() => setToast(null), 4000);
     }, 700);
   };
@@ -501,7 +501,7 @@ export default function EscalatePanel() {
     setIsSendingMessage(true);
     setTimeout(() => {
       setIsSendingMessage(false);
-      setToast(`✓ Escalation Notice sent via ${customChannel.toUpperCase()} to ${actionLog?.customer_name || "customer"}!`);
+      setToast(`Escalation Notice sent via ${customChannel.toUpperCase()} to ${actionLog?.customer_name || "customer"}!`);
       setTimeout(() => setToast(null), 4000);
     }, 700);
   };
@@ -595,7 +595,7 @@ export default function EscalatePanel() {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>Escalation Panel</h1>
-            <Badge tone="critical" style={{ fontSize: 12, padding: "3px 10px" }}>🔴 Red Zone</Badge>
+            <Badge tone="critical" style={{ fontSize: 12, padding: "3px 10px" }}>Red Zone</Badge>
             <Badge tone="warn" style={{ fontSize: 11.5, padding: "3px 10px" }}>
               {filteredLogs.length} Case{filteredLogs.length !== 1 ? "s" : ""} Active
             </Badge>
@@ -609,7 +609,7 @@ export default function EscalatePanel() {
                 fontSize: 12,
                 fontWeight: 700,
               }}>
-                ✓ {selectedIds.size} selected
+                {selectedIds.size} selected
               </span>
             )}
           </div>
@@ -642,7 +642,7 @@ export default function EscalatePanel() {
               transition: "all 0.18s ease",
             }}
           >
-            {isBulkAiRunning ? "🤖 Running AI…" : `🤖 Escalate Through AI${selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}`}
+            {isBulkAiRunning ? "Running AI…" : `Escalate Through AI${selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}`}
           </button>
 
           {/* AI Config Toggle */}
@@ -663,7 +663,7 @@ export default function EscalatePanel() {
               cursor: "pointer",
             }}
           >
-            ⚙️ AI Config {showAiPanel ? "▲" : "▼"}
+            AI Config {showAiPanel ? "▲" : "▼"}
           </button>
 
           {/* Refresh */}
@@ -680,9 +680,9 @@ export default function EscalatePanel() {
       {/* Toast Notification */}
       {toast && (
         <div style={{
-          background: toast.startsWith("⚠") ? "rgba(245,158,11,0.12)" : toast.startsWith("🤖") ? "rgba(124,58,237,0.12)" : "rgba(239,68,68,0.12)",
-          border: `1px solid ${toast.startsWith("⚠") ? "rgba(245,158,11,0.35)" : toast.startsWith("🤖") ? "rgba(124,58,237,0.35)" : "rgba(239,68,68,0.35)"}`,
-          color: toast.startsWith("⚠") ? "#f59e0b" : toast.startsWith("🤖") ? "#7c3aed" : "#ef4444",
+          background: toast.includes("Warning") ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.12)",
+          border: `1px solid ${toast.includes("Warning") ? "rgba(245,158,11,0.35)" : "rgba(239,68,68,0.35)"}`,
+          color: toast.includes("Warning") ? "#f59e0b" : "#ef4444",
           padding: "11px 16px",
           borderRadius: 10,
           fontSize: 13.5,
@@ -707,7 +707,7 @@ export default function EscalatePanel() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800, color: "#7c3aed", display: "flex", alignItems: "center", gap: 6 }}>
-                🤖 AI Escalation Engine — Configuration
+                AI Escalation Engine — Configuration
               </div>
               <div style={{ fontSize: 12, color: "var(--text-dim)", marginTop: 2 }}>
                 Define the instructions and conditions the AI will follow when "Escalate Through AI" is triggered.
@@ -722,7 +722,7 @@ export default function EscalatePanel() {
             {/* AI Instruction */}
             <div style={{ gridColumn: "1 / -1" }}>
               <label style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: 0.4, display: "block", marginBottom: 6 }}>
-                🗣 AI Instruction / Command
+                AI Instruction / Command
               </label>
               <textarea
                 rows={3}
@@ -747,27 +747,27 @@ export default function EscalatePanel() {
             {/* AI Action Type */}
             <div>
               <label style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: 0.4, display: "block", marginBottom: 6 }}>
-                🎯 Default AI Action
+                Default AI Action
               </label>
               <select
                 value={aiAction}
                 onChange={(e) => setAiAction(e.target.value)}
                 style={{ width: "100%", padding: "9px 11px", borderRadius: 8, border: "1px solid var(--border-strong)", background: "var(--surface-2)", color: "var(--text)", fontSize: 13 }}
               >
-                <option value="legal_escalation">⚖️ Legal Escalation — Flag & Notify Legal Unit</option>
-                <option value="supervisor_callback">📞 Supervisor Callback — Urgent Priority Queue</option>
-                <option value="sms_final_notice">📩 SMS Final Notice — Dispatch Malay/English Alert</option>
-                <option value="dnd_registry">🚫 DND Registry — Block & Record</option>
-                <option value="hardship_referral">💛 Hardship Referral — BANTU / Welfare Desk</option>
-                <option value="instalment_offer">📋 Instalment Offer — Send Plan via WhatsApp</option>
-                <option value="full_workflow">🔄 Full Workflow — All of the above in sequence</option>
+                <option value="legal_escalation">Legal Escalation — Flag & Notify Legal Unit</option>
+                <option value="supervisor_callback">Supervisor Callback — Urgent Priority Queue</option>
+                <option value="sms_final_notice">SMS Final Notice — Dispatch Malay/English Alert</option>
+                <option value="dnd_registry">DND Registry — Block & Record</option>
+                <option value="hardship_referral">Hardship Referral — BANTU / Welfare Desk</option>
+                <option value="instalment_offer">Instalment Offer — Send Plan via WhatsApp</option>
+                <option value="full_workflow">Full Workflow — All of the above in sequence</option>
               </select>
             </div>
 
             {/* Trigger Conditions */}
             <div>
               <label style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: 0.4, display: "block", marginBottom: 6 }}>
-                🔧 Trigger Conditions
+                Trigger Conditions
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                 {aiConditions.map((cond) => (
@@ -820,7 +820,7 @@ export default function EscalatePanel() {
           {/* Critical Cases highlight */}
           <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "12px 15px" }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: "#ef4444", marginBottom: 6 }}>
-              🔴 CRITICAL ESCALATION CASES — Immediate AI Action Required
+              CRITICAL ESCALATION CASES — Immediate AI Action Required
             </div>
             <div style={{ fontSize: 12, color: "var(--text-dim)", lineHeight: 1.55 }}>
               {filteredLogs.filter((r) => getPriorityBucket(r) === "CRITICAL").length} critical case(s) detected.
@@ -864,7 +864,7 @@ export default function EscalatePanel() {
             }}
           />
           <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "var(--text-faint)" }}>
-            🔍
+            
           </span>
         </div>
 
@@ -968,7 +968,7 @@ export default function EscalatePanel() {
               fontSize: 12.5,
             }}
           >
-            <option value="ALL">📅 All Dates</option>
+            <option value="ALL">All Dates</option>
             <option value="TODAY">Today</option>
             <option value="YESTERDAY">Yesterday</option>
             <option value="LAST_7">Last 7 Days</option>
@@ -1143,7 +1143,7 @@ export default function EscalatePanel() {
                     {(row.call_id || "ID-UNKNOWN").substring(0, 14)}
                   </div>
                   <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginTop: 3 }}>
-                    📅 {formatTimestamp(row)}
+                    {formatTimestamp(row)}
                   </div>
                 </td>
 
@@ -1151,7 +1151,7 @@ export default function EscalatePanel() {
                 <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
                     <Badge tone="critical" style={{ fontSize: 11, fontWeight: 800 }}>
-                      🔴 {row.handling_priority || "RED"}
+                      {row.handling_priority || "RED"}
                     </Badge>
                     <Badge tone={intentTone(row.customer_intent)} style={{ fontSize: 11 }}>
                       {row.customer_intent || "UNKNOWN"}
@@ -1163,12 +1163,12 @@ export default function EscalatePanel() {
                 <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
                   <Badge tone={frustrationTone(frustVal)} style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px" }}>
                     {frustVal === "HIGH" || frustVal === "SEVERE"
-                      ? "🔥 " + frustVal
+                      ? frustVal
                       : frustVal === "MODERATE"
-                      ? "🟡 " + frustVal
+                      ? frustVal
                       : frustVal === "LOW"
-                      ? "🔵 " + frustVal
-                      : "⚪ " + frustVal}
+                      ? frustVal
+                      : frustVal}
                   </Badge>
                 </td>
 
@@ -1278,7 +1278,7 @@ export default function EscalatePanel() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      🚫 DND
+                      DND
                     </button>
                     <button
                       type="button"
@@ -1298,7 +1298,7 @@ export default function EscalatePanel() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      📞 Call
+                      Call
                     </button>
                     <button
                       type="button"
@@ -1319,7 +1319,7 @@ export default function EscalatePanel() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      ⚡ Action
+                      Action
                     </button>
                   </div>
                 </td>
@@ -1352,13 +1352,13 @@ export default function EscalatePanel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {criticalRows.length > 0 && <SectionLabel label="🚨 Critical Priority Escalations" color="#ef4444" rows={criticalRows} />}
+                  {criticalRows.length > 0 && <SectionLabel label="Critical Priority Escalations" color="#ef4444" rows={criticalRows} />}
                   {criticalRows.map((r, i) => renderRow(r, "crit-" + i))}
 
-                  {highRows.length > 0 && <SectionLabel label="⚡ High Priority Escalations" color="#f59e0b" rows={highRows} />}
+                  {highRows.length > 0 && <SectionLabel label="High Priority Escalations" color="#f59e0b" rows={highRows} />}
                   {highRows.map((r, i) => renderRow(r, "high-" + i))}
 
-                  {moderateRows.length > 0 && <SectionLabel label="🔵 Moderate / Standard Escalations" color="#3b82f6" rows={moderateRows} />}
+                  {moderateRows.length > 0 && <SectionLabel label="Moderate / Standard Escalations" color="#3b82f6" rows={moderateRows} />}
                   {moderateRows.map((r, i) => renderRow(r, "mod-" + i))}
                 </tbody>
               </table>
@@ -1445,7 +1445,7 @@ export default function EscalatePanel() {
             {/* Option 1: Direct Call / Move to AI Agent Card */}
             <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "block", marginBottom: 6 }}>
-                📞 Direct Call / Run AI Agent Call
+                Direct Call / Run AI Agent Call
               </label>
               <select
                 value={selectedAgent}
@@ -1489,7 +1489,7 @@ export default function EscalatePanel() {
                     opacity: isRunningAiAgent ? 0.7 : 1,
                   }}
                 >
-                  {isRunningAiAgent ? "⏳ Running..." : "▶ Run"}
+                  {isRunningAiAgent ? "Running..." : "Run"}
                 </button>
               </div>
             </div>
@@ -1497,7 +1497,7 @@ export default function EscalatePanel() {
             {/* Option 2: Move to Escalation Team Card */}
             <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "block", marginBottom: 6 }}>
-                👥 Move to Escalation Team
+                Move to Escalation Team
               </label>
               <select
                 value={selectedTeam}
@@ -1539,7 +1539,7 @@ export default function EscalatePanel() {
                     opacity: isMovingTeam ? 0.7 : 1,
                   }}
                 >
-                  {isMovingTeam ? "⏳ Moving..." : "↪ Move"}
+                  {isMovingTeam ? "Moving..." : "Move"}
                 </button>
               </div>
             </div>
@@ -1547,7 +1547,7 @@ export default function EscalatePanel() {
             {/* Option 3: Trigger High-Priority Workflows Card */}
             <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "block", marginBottom: 8 }}>
-                ⚡ Trigger High-Priority Workflows
+                Trigger High-Priority Workflows
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12.5 }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
@@ -1605,7 +1605,7 @@ export default function EscalatePanel() {
                     opacity: isRunningWorkflows ? 0.7 : 1,
                   }}
                 >
-                  {isRunningWorkflows ? "⏳ Running..." : "⚡ Run"}
+                  {isRunningWorkflows ? "Running..." : "Run"}
                 </button>
               </div>
             </div>
@@ -1613,7 +1613,7 @@ export default function EscalatePanel() {
             {/* Option 4: Do Not Disturb (DND) Direct Registry */}
             <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "block", marginBottom: 8 }}>
-                🚫 Do Not Disturb (DND) Management
+                Do Not Disturb (DND) Management
               </label>
 
               <div style={{ display: "flex", gap: 12, marginBottom: 10, fontSize: 12 }}>
@@ -1686,7 +1686,7 @@ export default function EscalatePanel() {
                     opacity: isApplyingDnd ? 0.7 : 1,
                   }}
                 >
-                  {isApplyingDnd ? "⏳ Registering..." : "🚫 Add to DND"}
+                  {isApplyingDnd ? "Registering..." : "Add to DND"}
                 </button>
               </div>
             </div>
@@ -1694,7 +1694,7 @@ export default function EscalatePanel() {
             {/* Option 5: Send Escalation Notice Message */}
             <div style={{ background: "var(--surface-2)", padding: 14, borderRadius: 10, border: "1px solid var(--border)" }}>
               <label style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", display: "block", marginBottom: 8 }}>
-                💬 Send Escalation Notice Message
+                Send Escalation Notice Message
               </label>
 
               <div style={{ display: "flex", gap: 12, marginBottom: 10, fontSize: 12 }}>
@@ -1769,8 +1769,8 @@ export default function EscalatePanel() {
                   }}
                 >
                   {isSendingMessage
-                    ? "⏳ Sending..."
-                    : `📤 Send ${customChannel.toUpperCase()} Notice`}
+                    ? "Sending..."
+                    : `Send ${customChannel.toUpperCase()} Notice`}
                 </button>
               </div>
             </div>
