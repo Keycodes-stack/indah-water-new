@@ -20,8 +20,8 @@ import mailService from "../../mail-service.cjs";
 const expressHandler = serverless(mailService.app);
 
 const INBOX_PATH = "/api/fetch-inbound-emails";
-const STALE_MS = 15000; // refresh the stored snapshot when it is older than this
-const LOCK_MS = 120000; // never start a second refresh while one began within this window
+const HEARTBEAT_MS = 90000; // the watcher writes a heartbeat every ~20s; older than this = it stopped
+const START_LOCK_MS = 60000; // never start a second watcher while one was started within this window
 
 async function serveInbox(event) {
   try {
@@ -29,16 +29,17 @@ async function serveInbox(event) {
     const store = getStore("iwk-inbox");
 
     const snapshot = (await store.get("latest", { type: "json" })) || null;
+    const alive = (await store.get("alive", { type: "json" })) || null;
     const lock = (await store.get("lock", { type: "json" })) || null;
     const now = Date.now();
-    const stale = !snapshot || now - snapshot.at > STALE_MS;
-    const refreshing = !!lock && now - lock.at < LOCK_MS;
+    const watching = !!alive && now - alive.at < HEARTBEAT_MS;
+    const starting = !!lock && now - lock.at < START_LOCK_MS;
 
-    if (stale && !refreshing) {
+    if (!watching && !starting) {
       await store.setJSON("lock", { at: now });
       const base = process.env.URL || `https://${event.headers?.host}`;
       try {
-        // The background function answers 202 immediately and keeps working after we return.
+        // The background function answers 202 immediately and keeps running (it holds the IMAP connection).
         await fetch(`${base}/.netlify/functions/inbox-refresh-background`, {
           method: "POST",
           signal: AbortSignal.timeout(4000),
@@ -56,7 +57,7 @@ async function serveInbox(event) {
         emails: snapshot?.emails || [],
         ...(snapshot?.error ? { imap_error: snapshot.error } : {}),
         updatedAt: snapshot?.at || null,
-        refreshing: stale,
+        watching: watching || starting,
       }),
     };
   } catch (err) {

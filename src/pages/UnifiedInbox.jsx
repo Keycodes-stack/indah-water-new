@@ -238,6 +238,36 @@ const SENTIMENT_CHART_DATA = [
   { name: "SMS", positive: 60, neutral: 26, negative: 14 },
 ];
 
+/* Merge one inbound email into an existing Support Email thread.
+   Messages are identified by their IMAP uid, so a customer who sends the SAME words twice
+   (e.g. "Received and thanks.") still gets both shown. Older entries saved before uids were
+   tracked are matched once by text and then stamped with the uid. Returns the updated thread,
+   or null when the message is already in the thread. */
+function mergeInboundIntoThread(thread, inbound) {
+  const history = thread.history || [];
+  if (history.some((h) => h.uid != null && h.uid === inbound.uid)) return null;
+
+  const text = (inbound.inboundSnippet || "").trim();
+  const legacyIdx = history.findIndex(
+    (h) => h.uid == null && String(h.sender || "").startsWith("Customer") && String(h.text || "").trim() === text
+  );
+  if (legacyIdx !== -1) {
+    // already shown before uids existed — just remember its uid
+    return { ...thread, history: history.map((h, i) => (i === legacyIdx ? { ...h, uid: inbound.uid } : h)), _stampedOnly: true };
+  }
+
+  const entry = { sender: `Customer (${inbound.senderEmail})`, text: inbound.inboundSnippet, time: inbound.sentDate || "Just now", uid: inbound.uid };
+  return {
+    ...thread,
+    inboundSnippet: inbound.inboundSnippet,
+    lastSnippet: inbound.inboundSnippet,
+    sentDate: inbound.sentDate || "Just now",
+    openStatus: "Received (Inbound)",
+    history: [...history, entry],
+    _newEntry: entry,
+  };
+}
+
 export default function UnifiedInbox() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -353,55 +383,45 @@ export default function UnifiedInbox() {
             let hasChanges = false;
             const updated = [...prev];
 
-            validEmails.forEach((inbound) => {
+            // oldest first, so replies appear in the order they were sent
+            [...validEmails].sort((a, b) => (a.uid || 0) - (b.uid || 0)).forEach((inbound) => {
               // Find matching thread by sender email
               const threadIndex = updated.findIndex(
                 (t) => (t.senderEmail || t.email)?.toLowerCase() === inbound.senderEmail?.toLowerCase()
               );
 
               if (threadIndex !== -1) {
-                // Thread exists, check if message already present in history
-                const currentThread = updated[threadIndex];
-                const alreadyExists = (currentThread.history || []).some(
-                  (h) => h.text.trim() === inbound.inboundSnippet.trim()
-                );
-
-                if (!alreadyExists) {
+                const merged = mergeInboundIntoThread(updated[threadIndex], inbound);
+                if (merged) {
+                  const { _newEntry, _stampedOnly, ...thread } = merged;
+                  updated[threadIndex] = thread;
                   hasChanges = true;
-                  const newHistMsg = {
-                    sender: `Customer (${inbound.senderEmail})`,
-                    text: inbound.inboundSnippet,
-                    time: inbound.sentDate || "Just now",
-                  };
-                  updated[threadIndex] = {
-                    ...currentThread,
-                    inboundSnippet: inbound.inboundSnippet,
-                    lastSnippet: inbound.inboundSnippet,
-                    sentDate: inbound.sentDate || "Just now",
-                    openStatus: "Received (Inbound)",
-                    history: [...(currentThread.history || []), newHistMsg],
-                  };
 
                   // Also update activeMessage if currently open in modal!
-                  setActiveMessage((currentActive) => {
-                    if (
-                      currentActive &&
-                      (currentActive.senderEmail || currentActive.email)?.toLowerCase() ===
-                        inbound.senderEmail?.toLowerCase()
-                    ) {
-                      return {
-                        ...currentActive,
-                        lastSnippet: inbound.inboundSnippet,
-                        history: [...(currentActive.history || []), newHistMsg],
-                      };
-                    }
-                    return currentActive;
-                  });
+                  if (_newEntry) {
+                    setActiveMessage((currentActive) => {
+                      if (
+                        currentActive &&
+                        (currentActive.senderEmail || currentActive.email)?.toLowerCase() ===
+                          inbound.senderEmail?.toLowerCase()
+                      ) {
+                        return {
+                          ...currentActive,
+                          lastSnippet: inbound.inboundSnippet,
+                          history: [...(currentActive.history || []), _newEntry],
+                        };
+                      }
+                      return currentActive;
+                    });
+                  }
                 }
               } else {
                 // Completely new customer email
                 hasChanges = true;
-                updated.unshift(inbound);
+                updated.unshift({
+                  ...inbound,
+                  history: (inbound.history || []).map((h) => ({ ...h, uid: inbound.uid })),
+                });
               }
             });
 
@@ -1349,34 +1369,28 @@ export default function UnifiedInbox() {
                     if (data.success && data.emails && data.emails.length > 0) {
                       setCustomerEmails((prev) => {
                         const updated = [...prev];
-                        data.emails.forEach((inbound) => {
+                        [...data.emails].sort((x, y) => (x.uid || 0) - (y.uid || 0)).forEach((inbound) => {
                           const idx = updated.findIndex(
                             (t) => (t.senderEmail || t.email)?.toLowerCase() === inbound.senderEmail?.toLowerCase()
                           );
                           if (idx !== -1) {
-                            const cur = updated[idx];
-                            const exists = (cur.history || []).some((h) => h.text.trim() === inbound.inboundSnippet.trim());
-                            if (!exists) {
-                              const newH = {
-                                sender: `Customer (${inbound.senderEmail})`,
-                                text: inbound.inboundSnippet,
-                                time: inbound.sentDate || "Just now",
-                              };
-                              updated[idx] = {
-                                ...cur,
-                                inboundSnippet: inbound.inboundSnippet,
-                                lastSnippet: inbound.inboundSnippet,
-                                sentDate: inbound.sentDate || "Just now",
-                                history: [...(cur.history || []), newH],
-                              };
-                              setActiveMessage((curActive) =>
-                                curActive && (curActive.senderEmail || curActive.email)?.toLowerCase() === inbound.senderEmail?.toLowerCase()
-                                  ? { ...curActive, lastSnippet: inbound.inboundSnippet, history: [...(curActive.history || []), newH] }
-                                  : curActive
-                              );
+                            const merged = mergeInboundIntoThread(updated[idx], inbound);
+                            if (merged) {
+                              const { _newEntry, _stampedOnly, ...thread } = merged;
+                              updated[idx] = thread;
+                              if (_newEntry) {
+                                setActiveMessage((curActive) =>
+                                  curActive && (curActive.senderEmail || curActive.email)?.toLowerCase() === inbound.senderEmail?.toLowerCase()
+                                    ? { ...curActive, lastSnippet: inbound.inboundSnippet, history: [...(curActive.history || []), _newEntry] }
+                                    : curActive
+                                );
+                              }
                             }
                           } else {
-                            updated.unshift(inbound);
+                            updated.unshift({
+                              ...inbound,
+                              history: (inbound.history || []).map((h) => ({ ...h, uid: inbound.uid })),
+                            });
                           }
                         });
                         return updated;

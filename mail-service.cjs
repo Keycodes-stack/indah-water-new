@@ -207,18 +207,8 @@ function fetchNewest(imap, total, count) {
 
 // Reads the newest inbound customer emails. `holder.connection` lets the caller close the
 // IMAP connection if the deadline passes first.
-async function readInbox(holder, cfg = IMAP_CONFIG) {
-    const pending = imaps.connect(cfg);
-    holder.pending = pending; // lets the caller close it even if the deadline passes mid-connect
-    const connection = await pending;
-    holder.connection = connection;
-    const box = await connection.openBox('INBOX');
-
-    // One round trip: fetch the newest 10 messages by sequence number. (Gmail's IMAP can take ~20s per
-    // command, so a separate SEARCH step is avoided; a UID list also silently dropped messages.)
-    const recent = await fetchNewest(connection.imap, box.messages.total, 10);
-    recent.sort((a, b) => b.attributes.uid - a.attributes.uid);
-
+// Turns raw IMAP messages into Support Email threads (customer mail only; skips Google/no-reply/self).
+async function parseInbound(recent) {
     const parsedEmails = [];
 
     for (const item of recent) {
@@ -292,6 +282,68 @@ async function readInbox(holder, cfg = IMAP_CONFIG) {
     return parsedEmails;
 }
 
+async function readInbox(holder, cfg = IMAP_CONFIG) {
+    const pending = imaps.connect(cfg);
+    holder.pending = pending; // lets the caller close it even if the deadline passes mid-connect
+    const connection = await pending;
+    holder.connection = connection;
+
+    const box = await connection.openBox('INBOX');
+
+    // One round trip: fetch the newest 10 messages by sequence number. (Gmail's IMAP can take ~20s per
+    // command, so a separate SEARCH step is avoided; a UID list also silently dropped messages.)
+    const recent = await fetchNewest(connection.imap, box.messages.total, 20);
+    recent.sort((a, b) => b.attributes.uid - a.attributes.uid);
+
+    return parseInbound(recent);
+}
+
+
+// Keeps ONE IMAP connection open (IMAP IDLE) and reports a fresh snapshot whenever new mail arrives.
+// Used by the Netlify background function: a reply then shows up one fetch (~25s) after it lands,
+// instead of a whole connect + select + fetch cycle (~90s on this Gmail account).
+//   maxMs        – stop after this long (a background function may run up to 15 minutes)
+//   onSnapshot   – async (emails) => void, called after every fetch
+//   onHeartbeat  – async () => void, called every loop so a caller can tell the watcher is alive
+async function watchInbox({ maxMs, onSnapshot, onHeartbeat, refreshEveryMs = 60000 }) {
+  const cfg = { imap: { ...IMAP_CONFIG.imap, authTimeout: 60000, connTimeout: 60000 } };
+  const holder = {};
+  const pending = imaps.connect(cfg);
+  holder.pending = pending;
+  const connection = await pending;
+  holder.connection = connection;
+
+  let wake = () => {};
+  let dirty = true;
+  let broken = null;
+  connection.imap.on('mail', () => { dirty = true; wake(); });
+  connection.imap.on('error', (e) => { broken = e; wake(); });
+  connection.imap.on('close', () => { broken = broken || new Error('IMAP connection closed'); wake(); });
+
+  try {
+    const box = await connection.openBox('INBOX');
+    const until = Date.now() + maxMs;
+    let lastFetch = 0;
+
+    while (Date.now() < until && !broken) {
+      if (onHeartbeat) await onHeartbeat();
+      if (dirty || Date.now() - lastFetch > refreshEveryMs) {
+        dirty = false;
+        lastFetch = Date.now();
+        const total = (connection.imap._box || box).messages.total;
+        const recent = await fetchNewest(connection.imap, total, 20);
+        recent.sort((a, b) => b.attributes.uid - a.attributes.uid);
+        await onSnapshot(await parseInbound(recent));
+      }
+      if (broken) break;
+      if (!dirty) await new Promise((resolve) => { wake = resolve; setTimeout(resolve, 20000); });
+    }
+  } finally {
+    closeImap(connection);
+  }
+  if (broken) throw broken;
+}
+
 // One IMAP login at a time (shared by every browser tab polling), a short cache, and a hard
 // deadline — a slow Gmail answers with an empty list instead of hanging the page or the function.
 let inboxInFlight = null;
@@ -356,4 +408,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, loadInbox };
+module.exports = { app, loadInbox, watchInbox };
