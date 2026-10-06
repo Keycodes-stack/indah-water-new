@@ -17,6 +17,15 @@ import {
   DEFAULT_SEQUENCER_TEMPLATES,
   INITIAL_WHATSAPP_CONVERSATIONS,
 } from "../db/inboxStore.js";
+import {
+  getTwilioConfig,
+  saveTwilioConfig,
+  getGhlConfig,
+  saveGhlConfig,
+  sendTwilioSms,
+  triggerGhlWebhook,
+  sendLiveAlertEmail,
+} from "../lib/omnichannel.js";
 
 /* Collective Channels Summary Data */
 const CHANNEL_METRICS = [
@@ -229,10 +238,10 @@ const SENTIMENT_CHART_DATA = [
 export default function UnifiedInbox() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Channel tab: 'all' | 'whatsapp' | 'email' | 'sms' | 'sequencer'
+  // Channel tab: 'all' | 'whatsapp' | 'email' | 'sms' | 'customer_emails' | 'sequencer'
   const initialChannel = searchParams.get("channel") || "all";
   const [activeTab, setActiveTab] = useState(
-    ["all", "whatsapp", "email", "sms", "sequencer"].includes(initialChannel?.toLowerCase() || "all")
+    ["all", "whatsapp", "email", "sms", "customer_emails", "sequencer"].includes(initialChannel?.toLowerCase() || "all")
       ? (initialChannel?.toLowerCase() || "all")
       : "all"
   );
@@ -245,13 +254,170 @@ export default function UnifiedInbox() {
 
   // Active Conversations State
   const [whatsappConversations, setWhatsappConversations] = useState(INITIAL_WHATSAPP_CONVERSATIONS);
+  const [smsMessages, setSmsMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem("iwk_live_sms_messages");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn("Failed to load saved SMS records:", e);
+    }
+    return SMS_MESSAGES;
+  });
   const [activeMessage, setActiveMessage] = useState(null);
+
+  const [emailMessages, setEmailMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem("iwk_live_email_messages");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn("Failed to load saved Email records:", e);
+    }
+    return EMAIL_MESSAGES;
+  });
+
+  // Sync emailMessages with localStorage on change
+  useEffect(() => {
+    try {
+      localStorage.setItem("iwk_live_email_messages", JSON.stringify(emailMessages));
+    } catch (e) {
+      console.warn("Failed to persist Email records:", e);
+    }
+  }, [emailMessages]);
+
+  // Customer Emails (Dedicated Inbox handled by customerrr804@gmail.com)
+  const [customerEmails, setCustomerEmails] = useState(() => {
+    try {
+      const saved = localStorage.getItem("iwk_live_customer_emails");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn("Failed to load customer emails:", e);
+    }
+    return [];
+  });
+
+  // Sync customerEmails with localStorage on change
+  useEffect(() => {
+    try {
+      localStorage.setItem("iwk_live_customer_emails", JSON.stringify(customerEmails));
+    } catch (e) {}
+  }, [customerEmails]);
+
+  // Auto-sync polling: check for new replies sent to coutomerr@gmail.com every 8 seconds
+  useEffect(() => {
+    const fetchLatestReplies = async () => {
+      try {
+        const res = await fetch("http://localhost:3001/api/fetch-inbound-emails");
+        const data = await res.json();
+        if (data.success && data.emails && data.emails.length > 0) {
+          // Check if user previously cleared the inbox
+          const clearedUids = JSON.parse(localStorage.getItem("iwk_cleared_email_uids") || "[]");
+          const clearedSet = new Set(clearedUids);
+
+          // Filter out cleared emails
+          const validEmails = data.emails.filter((e) => !clearedSet.has(e.uid));
+          if (validEmails.length === 0 && customerEmails.length === 0) return;
+
+          setCustomerEmails((prev) => {
+            let hasChanges = false;
+            const updated = [...prev];
+
+            validEmails.forEach((inbound) => {
+              // Find matching thread by sender email
+              const threadIndex = updated.findIndex(
+                (t) => (t.senderEmail || t.email)?.toLowerCase() === inbound.senderEmail?.toLowerCase()
+              );
+
+              if (threadIndex !== -1) {
+                // Thread exists, check if message already present in history
+                const currentThread = updated[threadIndex];
+                const alreadyExists = (currentThread.history || []).some(
+                  (h) => h.text.trim() === inbound.inboundSnippet.trim()
+                );
+
+                if (!alreadyExists) {
+                  hasChanges = true;
+                  const newHistMsg = {
+                    sender: `Customer (${inbound.senderEmail})`,
+                    text: inbound.inboundSnippet,
+                    time: inbound.sentDate || "Just now",
+                  };
+                  updated[threadIndex] = {
+                    ...currentThread,
+                    inboundSnippet: inbound.inboundSnippet,
+                    lastSnippet: inbound.inboundSnippet,
+                    sentDate: inbound.sentDate || "Just now",
+                    openStatus: "Received (Inbound)",
+                    history: [...(currentThread.history || []), newHistMsg],
+                  };
+
+                  // Also update activeMessage if currently open in modal!
+                  setActiveMessage((currentActive) => {
+                    if (
+                      currentActive &&
+                      (currentActive.senderEmail || currentActive.email)?.toLowerCase() ===
+                        inbound.senderEmail?.toLowerCase()
+                    ) {
+                      return {
+                        ...currentActive,
+                        lastSnippet: inbound.inboundSnippet,
+                        history: [...(currentActive.history || []), newHistMsg],
+                      };
+                    }
+                    return currentActive;
+                  });
+                }
+              } else {
+                // Completely new customer email
+                hasChanges = true;
+                updated.unshift(inbound);
+              }
+            });
+
+            return hasChanges ? updated : prev;
+          });
+        }
+      } catch (e) {
+        // silent background poll
+      }
+    };
+
+    fetchLatestReplies();
+    const interval = setInterval(fetchLatestReplies, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Modal to simulate/receive customer's incoming email from personal Gmail
+  const [showInboundEmailModal, setShowInboundEmailModal] = useState(false);
+  const [inboundSenderEmail, setInboundSenderEmail] = useState("");
+  const [inboundSenderName, setInboundSenderName] = useState("");
+  const [inboundEmailSubject, setInboundEmailSubject] = useState("");
+  const [inboundEmailMessage, setInboundEmailMessage] = useState("");
+
+  // Compose Outbound Email Modal — Send first email FROM dashboard TO customer
+  const [showComposeModal, setShowComposeModal] = useState(false);
+  const [composeToEmail, setComposeToEmail] = useState("");
+  const [composeCustomerName, setComposeCustomerName] = useState("");
+  const [composeAccountNo, setComposeAccountNo] = useState("");
+  const [composeSubject, setComposeSubject] = useState("");
+  const [composeBody, setComposeBody] = useState("");
+  const [composeSending, setComposeSending] = useState(false);
+  const [composeStatus, setComposeStatus] = useState("");
 
   // Modal chat input and attachment state
   const [replyText, setReplyText] = useState("");
   const [selectedAttachment, setSelectedAttachment] = useState(null);
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [isAiTyping, setIsAiTyping] = useState(false);
+
+  // Twilio & GHL Integration State
+  const [twilioConfig, setTwilioConfig] = useState(getTwilioConfig());
+  const [ghlConfig, setGhlConfig] = useState(getGhlConfig());
+  const [showIntegrationModal, setShowIntegrationModal] = useState(false);
+  const [integrationModalTab, setIntegrationModalTab] = useState("twilio"); // 'twilio' | 'ghl'
+  const [smsSendStatus, setSmsSendStatus] = useState("");
+  const [isSendingSms, setIsSendingSms] = useState(false);
+  const [testInputNumber, setTestInputNumber] = useState("+60129901234");
+  const [testInputMessage, setTestInputMessage] = useState("IWK Alert: Sila jelaskan tunggakan bil perkhidmatan pembetungan akaun 6199-5544-2211. Terima kasih.");
 
   // Template Sequencer State
   const [templates, setTemplates] = useState(DEFAULT_SEQUENCER_TEMPLATES);
@@ -333,7 +499,7 @@ export default function UnifiedInbox() {
 
   // Filter Email records
   const filteredEmail = useMemo(() => {
-    return EMAIL_MESSAGES.filter((msg) => {
+    return emailMessages.filter((msg) => {
       const matchSentiment =
         sentimentFilter === "all" || msg?.sentiment?.toLowerCase() === sentimentFilter.toLowerCase();
       const needle = search?.trim()?.toLowerCase() || "";
@@ -349,7 +515,7 @@ export default function UnifiedInbox() {
 
   // Filter SMS records
   const filteredSms = useMemo(() => {
-    return SMS_MESSAGES.filter((msg) => {
+    return smsMessages.filter((msg) => {
       const matchSentiment =
         sentimentFilter === "all" || msg?.sentiment?.toLowerCase() === sentimentFilter.toLowerCase();
       const needle = search?.trim()?.toLowerCase() || "";
@@ -361,7 +527,24 @@ export default function UnifiedInbox() {
         msg?.inboundText?.toLowerCase()?.includes(needle);
       return matchSentiment && matchSearch;
     });
-  }, [sentimentFilter, search]);
+  }, [smsMessages, sentimentFilter, search]);
+
+  // Filter Customer Emails records (handled by customerrr804@gmail.com)
+  const filteredCustomerEmails = useMemo(() => {
+    return customerEmails.filter((msg) => {
+      const matchSentiment =
+        sentimentFilter === "all" || msg?.sentiment?.toLowerCase() === sentimentFilter.toLowerCase();
+      const needle = search?.trim()?.toLowerCase() || "";
+      const matchSearch =
+        !needle ||
+        msg?.customerName?.toLowerCase()?.includes(needle) ||
+        msg?.senderEmail?.toLowerCase()?.includes(needle) ||
+        msg?.accountNo?.toLowerCase()?.includes(needle) ||
+        msg?.subject?.toLowerCase()?.includes(needle) ||
+        msg?.inboundSnippet?.toLowerCase()?.includes(needle);
+      return matchSentiment && matchSearch;
+    });
+  }, [customerEmails, sentimentFilter, search]);
 
   const isAllAiPaused = useMemo(() => {
     return whatsappConversations.length > 0 && whatsappConversations.every((m) => m.isAiPaused);
@@ -412,29 +595,154 @@ export default function UnifiedInbox() {
     if (e) e.preventDefault();
     if (!replyText.trim() && !selectedAttachment) return;
 
+    const currentTimeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
     const newMsg = {
-      sender: "Agent (@admin)",
+      sender: activeMessage.channel === "Customer Email" ? "IWK Support Desk" : "Agent (@admin)",
       text: replyText.trim(),
-      time: "Just now",
+      time: `Today, ${currentTimeStr}`,
       attachment: selectedAttachment,
     };
 
-    const updated = whatsappConversations.map((m) => {
-      if (m.id === activeMessage.id) {
-        return {
-          ...m,
-          lastSnippet: replyText.trim() || `Sent attachment: ${selectedAttachment?.name}`,
-          history: [...m.history, newMsg],
-        };
-      }
-      return m;
+    // If channel is SMS and Twilio is configured, trigger real SMS dispatch
+    if (activeMessage.channel === "SMS" && twilioConfig.accountSid) {
+      sendTwilioSms({ to: activeMessage.phone, body: replyText.trim() })
+        .then(() => setSmsSendStatus("SMS dispatched via Twilio"))
+        .catch((err) => setSmsSendStatus(`Twilio Notice: ${err.message}`));
+    }
+
+    // If channel is Email, dispatch real email to recipient via local mail bridge
+    if (activeMessage.channel === "Email") {
+      const recipient = activeMessage.email || activeMessage.phone;
+      fetch("http://localhost:3001/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: recipient,
+          subject: `Re: ${activeMessage.subject || "Indah Water Billing Update"} [Account ${activeMessage.accountNo}]`,
+          body: replyText.trim(),
+          accountNo: activeMessage.accountNo,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setSmsSendStatus(`✓ Live Email dispatched to ${recipient}!`);
+          } else {
+            setSmsSendStatus(`ℹ️ Email dispatch notice: ${data.error || "Sent"}`);
+          }
+        })
+        .catch((err) => console.warn("Email reply dispatch error:", err));
+
+      // Update emailMessages state so snippet & outcome reflects the reply
+      setEmailMessages((prev) =>
+        prev.map((em) =>
+          em.id === activeMessage.id
+            ? {
+                ...em,
+                replySnippet: replyText.trim(),
+                outcome: "Rep Replied · Reconciled",
+                statusTone: "good",
+              }
+            : em
+        )
+      );
+    }
+
+    // Trigger GHL event sync for the message
+    triggerGhlWebhook({
+      eventType: "AGENT_REPLY",
+      contact: {
+        name: activeMessage.customerName,
+        phone: activeMessage.phone,
+        accountNo: activeMessage.accountNo,
+      },
+      message: replyText.trim(),
     });
 
-    setWhatsappConversations(updated);
+    // If channel is WhatsApp, update whatsappConversations
+    if (activeMessage.channel === "WhatsApp") {
+      const updated = whatsappConversations.map((m) => {
+        if (m.id === activeMessage.id) {
+          return {
+            ...m,
+            lastSnippet: replyText.trim() || `Sent attachment: ${selectedAttachment?.name}`,
+            history: [...m.history, newMsg],
+          };
+        }
+        return m;
+      });
+      setWhatsappConversations(updated);
+    }
+
+    // If channel is Customer Email (handled by customerrr804@gmail.com)
+    if (activeMessage.channel === "Customer Email") {
+      const recipient = activeMessage.senderEmail || activeMessage.email;
+
+      // 1. Send REAL LIVE email from customerrr804@gmail.com via Local Mail Bridge
+      fetch("http://localhost:3001/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: recipient,
+          subject: `Re: ${activeMessage.subject || "Customer Support Response"} [IWK Account ${activeMessage.accountNo}]`,
+          body: replyText.trim(),
+          accountNo: activeMessage.accountNo,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setSmsSendStatus(`✓ Live email dispatched from customerrr804@gmail.com to ${recipient}!`);
+          } else {
+            setSmsSendStatus(`ℹ️ Email dispatch: ${data.error || "Sent"}`);
+          }
+        })
+        .catch((err) => {
+          console.warn("Mail bridge dispatch error:", err);
+          setSmsSendStatus(`ℹ️ Mail bridge notice: ${err.message}`);
+        });
+
+      // Update customerEmails state with rep reply and live timestamp
+      setCustomerEmails((prev) =>
+        prev.map((cem) =>
+          cem.id === activeMessage.id
+            ? {
+                ...cem,
+                sentDate: `Today, ${currentTimeStr}`,
+                openStatus: "Delivered (Sent as Rep)",
+                outcome: "Rep Replied · Active Case",
+                statusTone: "good",
+                history: [
+                  ...(cem.history || []),
+                  newMsg,
+                ],
+              }
+            : cem
+        )
+      );
+    }
+
+    // If channel is SMS, update smsMessages
+    if (activeMessage.channel === "SMS") {
+      setSmsMessages((prev) =>
+        prev.map((m) =>
+          m.id === activeMessage.id
+            ? {
+                ...m,
+                inboundText: replyText.trim(),
+                timestamp: "Just now",
+                deliveryStatus: "Delivered",
+              }
+            : m
+        )
+      );
+    }
+
     setActiveMessage((prev) => ({
       ...prev,
       lastSnippet: replyText.trim() || `Sent attachment: ${selectedAttachment?.name}`,
-      history: [...prev.history, newMsg],
+      history: [...(prev.history || []), newMsg],
     }));
 
     setReplyText("");
@@ -442,7 +750,74 @@ export default function UnifiedInbox() {
     setShowAttachmentMenu(false);
   };
 
-  // Simulate Natural Humanized AI Response with delay
+  // Send a brand-new outbound email from dashboard → customer (initiates conversation)
+  const handleSendCompose = async (e) => {
+    if (e) e.preventDefault();
+    if (!composeToEmail.trim() || !composeBody.trim()) return;
+    setComposeSending(true);
+    setComposeStatus("");
+    const currentTimeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const subjectLine = composeSubject.trim() || `IWK Support: Account ${composeAccountNo || "N/A"}`;
+    try {
+      const res = await fetch("http://localhost:3001/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: composeToEmail.trim(),
+          subject: subjectLine,
+          body: composeBody.trim(),
+          accountNo: composeAccountNo.trim() || "N/A",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setComposeStatus("✅ Email sent successfully! Awaiting customer reply...");
+        // Create a new thread in Support Email tab so we can track the reply
+        const newThread = {
+          id: `CE-OUTBOUND-${Date.now()}`,
+          channel: "Customer Email",
+          customerName: composeCustomerName.trim() || composeToEmail.trim().split("@")[0],
+          senderEmail: composeToEmail.trim(),
+          handledBy: "IWK Support Desk",
+          accountNo: composeAccountNo.trim() || "N/A",
+          subject: subjectLine,
+          sentDate: `Today, ${currentTimeStr}`,
+          openStatus: "Delivered (Sent as Rep)",
+          inboundSnippet: composeBody.trim(),
+          lastSnippet: composeBody.trim(),
+          sentiment: "Neutral",
+          outcome: "Rep Initiated · Awaiting Reply",
+          statusTone: "good",
+          uid: `outbound-${Date.now()}`,
+          history: [
+            {
+              sender: "IWK Support Desk",
+              text: composeBody.trim(),
+              time: `Today, ${currentTimeStr}`,
+            },
+          ],
+        };
+        setCustomerEmails((prev) => [newThread, ...prev]);
+        // Close modal after 1.5s
+        setTimeout(() => {
+          setShowComposeModal(false);
+          setComposeToEmail("");
+          setComposeCustomerName("");
+          setComposeAccountNo("");
+          setComposeSubject("");
+          setComposeBody("");
+          setComposeStatus("");
+        }, 1500);
+      } else {
+        setComposeStatus(`❌ Error: ${data.error || "Failed to send"}`);
+      }
+    } catch (err) {
+      setComposeStatus(`❌ Mail bridge not reachable: ${err.message}`);
+    }
+    setComposeSending(false);
+  };
+
+
   const handleTriggerAiReply = () => {
     if (isAiTyping) return;
     setIsAiTyping(true);
@@ -615,22 +990,29 @@ export default function UnifiedInbox() {
             All Channels
           </button>
           <button
-            className={`inbox-tab-btn ${activeTab === "whatsapp" ? "active" : ""}`}
-            onClick={() => handleTabChange("whatsapp")}
+            className={`inbox-tab-btn ${activeTab === "customer_emails" ? "active" : ""}`}
+            style={activeTab === "customer_emails" ? { borderColor: "var(--brand)", fontWeight: 700 } : undefined}
+            onClick={() => handleTabChange("customer_emails")}
           >
-            WhatsApp e-Bill ({whatsappConversations.length})
-          </button>
-          <button
-            className={`inbox-tab-btn ${activeTab === "email" ? "active" : ""}`}
-            onClick={() => handleTabChange("email")}
-          >
-            Email ({EMAIL_MESSAGES.length})
+            Support Email ({customerEmails.length})
           </button>
           <button
             className={`inbox-tab-btn ${activeTab === "sms" ? "active" : ""}`}
             onClick={() => handleTabChange("sms")}
           >
-            SMS ({SMS_MESSAGES.length})
+            SMS ({smsMessages.length})
+          </button>
+          <button
+            className={`inbox-tab-btn ${activeTab === "email" ? "active" : ""}`}
+            onClick={() => handleTabChange("email")}
+          >
+            Supervisor's Email ({emailMessages.length})
+          </button>
+          <button
+            className={`inbox-tab-btn ${activeTab === "whatsapp" ? "active" : ""}`}
+            onClick={() => handleTabChange("whatsapp")}
+          >
+            WhatsApp e-Bill ({whatsappConversations.length})
           </button>
           <button
             className={`inbox-tab-btn ${activeTab === "sequencer" ? "active" : ""}`}
@@ -661,6 +1043,34 @@ export default function UnifiedInbox() {
             >
               {isAllAiPaused ? <PlayIcon size={14} /> : <PauseIcon size={14} />}
               <span>{isAllAiPaused ? "Resume All AI" : "Stop AI Auto-Pilot"}</span>
+            </button>
+
+            {/* Twilio & GHL Integration Control Button */}
+            <button
+              className="btn-ghost"
+              style={{
+                fontSize: 12,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                borderColor: twilioConfig.status === "CONNECTED" ? "var(--good)" : "var(--brand)",
+                background: "var(--surface)",
+                fontWeight: 600,
+              }}
+              onClick={() => setShowIntegrationModal(true)}
+              title="Configure and monitor GoHighLevel (GHL) and Twilio SMS Gateway"
+            >
+              <span style={{ fontSize: 13 }}>⚙️</span>
+              <span>GHL & Twilio Gateway</span>
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: twilioConfig.status === "CONNECTED" ? "var(--good)" : "#f59e0b",
+                }}
+              />
             </button>
 
             {/* PDPA Privacy Phone Masking Toggle Button with SVG Icon */}
@@ -716,7 +1126,7 @@ export default function UnifiedInbox() {
         >
           {sequencerNotification && (
             <div style={{ padding: "10px 14px", background: "var(--good-soft)", color: "var(--good)", borderRadius: 8, fontSize: 13, marginBottom: 14 }}>
-              {sequencerNotification}
+              ✓ {sequencerNotification}
             </div>
           )}
 
@@ -878,178 +1288,197 @@ export default function UnifiedInbox() {
       )}
 
       {/* =============================================================
-          SUB-SECTION 1: WHATSAPP E-BILL CHAT THREADS TABLE
+          SUB-SECTION 1: SUPPORT EMAIL
           ============================================================= */}
-      {(activeTab === "all" || activeTab === "whatsapp") && (
+      {(activeTab === "all" || activeTab === "customer_emails") && (
         <Panel
-          title="WhatsApp e-Bill Portal Messages"
-          sub="Interactive two-way conversations, billing inquiries, and human takeover queue."
+          title="Support Email"
+          sub="Dedicated inbox for inbound queries, billing verification & live rep dispatch."
+          actions={
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ fontSize: 12, padding: "5px 12px", border: "1px solid var(--border)" }}
+                title="Fetch latest emails received by coutomerr@gmail.com"
+                onClick={async () => {
+                  try {
+                    const res = await fetch("http://localhost:3001/api/fetch-inbound-emails");
+                    const data = await res.json();
+                    if (data.success && data.emails && data.emails.length > 0) {
+                      setCustomerEmails((prev) => {
+                        const updated = [...prev];
+                        data.emails.forEach((inbound) => {
+                          const idx = updated.findIndex(
+                            (t) => (t.senderEmail || t.email)?.toLowerCase() === inbound.senderEmail?.toLowerCase()
+                          );
+                          if (idx !== -1) {
+                            const cur = updated[idx];
+                            const exists = (cur.history || []).some((h) => h.text.trim() === inbound.inboundSnippet.trim());
+                            if (!exists) {
+                              const newH = {
+                                sender: `Customer (${inbound.senderEmail})`,
+                                text: inbound.inboundSnippet,
+                                time: inbound.sentDate || "Just now",
+                              };
+                              updated[idx] = {
+                                ...cur,
+                                inboundSnippet: inbound.inboundSnippet,
+                                lastSnippet: inbound.inboundSnippet,
+                                sentDate: inbound.sentDate || "Just now",
+                                history: [...(cur.history || []), newH],
+                              };
+                              setActiveMessage((curActive) =>
+                                curActive && (curActive.senderEmail || curActive.email)?.toLowerCase() === inbound.senderEmail?.toLowerCase()
+                                  ? { ...curActive, lastSnippet: inbound.inboundSnippet, history: [...(curActive.history || []), newH] }
+                                  : curActive
+                              );
+                            }
+                          } else {
+                            updated.unshift(inbound);
+                          }
+                        });
+                        return updated;
+                      });
+                      alert(`✓ Synchronized live inbox from coutomerr@gmail.com!`);
+                    } else {
+                      alert("No new unread emails found in coutomerr@gmail.com");
+                    }
+                  } catch (err) {
+                    alert("Mail bridge service: " + err.message);
+                  }
+                }}
+              >
+                🔄 Fetch Inbound (coutomerr)
+              </button>
+              {customerEmails.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ fontSize: 12, padding: "5px 12px", color: "var(--text-dim)" }}
+                  title="Clear all saved test emails"
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to clear all Support Email records?")) {
+                      // Save ALL current email UIDs so polling won't re-add them
+                      const allUids = customerEmails.map((e) => e.uid).filter(Boolean);
+                      // Also try to get IMAP UIDs and merge
+                      fetch("http://localhost:3001/api/fetch-inbound-emails")
+                        .then((r) => r.json())
+                        .then((data) => {
+                          const imapUids = (data?.emails || []).map((e) => e.uid).filter(Boolean);
+                          const merged = [...new Set([...allUids, ...imapUids])];
+                          localStorage.setItem("iwk_cleared_email_uids", JSON.stringify(merged));
+                        })
+                        .catch(() => {
+                          localStorage.setItem("iwk_cleared_email_uids", JSON.stringify(allUids));
+                        });
+                      setCustomerEmails([]);
+                      localStorage.removeItem("iwk_live_customer_emails");
+                    }
+                  }}
+                >
+                  🗑️ Clear Inbox
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="btn-solid"
+                style={{ fontSize: 12, padding: "6px 14px", background: "#059669" }}
+                onClick={() => {
+                  setComposeToEmail("");
+                  setComposeCustomerName("");
+                  setComposeAccountNo("");
+                  setComposeSubject("");
+                  setComposeBody("");
+                  setComposeStatus("");
+                  setShowComposeModal(true);
+                }}
+              >
+                ✉️ Compose New Email
+              </button>
+            </div>
+          }
         >
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>Customer Name</th>
-                  <th>Phone Number (PDPA)</th>
+                  <th>Sender Email</th>
+                  <th>Handled By</th>
                   <th>Account No</th>
-                  <th>Arrears</th>
-                  <th style={{ minWidth: 260 }}>Latest Conversation Snippet</th>
-                  <th>Timestamp</th>
+                  <th>Subject</th>
+                  <th>Sent Date</th>
+                  <th>Status</th>
+                  <th style={{ minWidth: 260 }}>Inbound Message</th>
                   <th>Sentiment</th>
-                  <th>AI Control Mode</th>
+                  <th>Outcome</th>
                   <th style={{ textAlign: "center" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredWhatsApp.length === 0 ? (
+                {filteredCustomerEmails.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ textAlign: "center", padding: "30px", color: "var(--text-dim)" }}>
-                      No WhatsApp threads match your search / sentiment filters.
+                    <td colSpan={11} style={{ textAlign: "center", padding: "30px", color: "var(--text-dim)" }}>
+                      No Support Emails match your search / sentiment filters.
                     </td>
                   </tr>
                 ) : (
-                  filteredWhatsApp.map((msg) => (
+                  filteredCustomerEmails.map((cem) => (
                     <tr
-                      key={msg.id}
-                      className="clickable-row"
-                      onClick={() => setActiveMessage({ ...msg, channel: "WhatsApp" })}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <td>
-                        <strong>{msg.customerName}</strong>
-                      </td>
-                      <td>
-                        <span className="mono-num">{maskPhonePDPA(msg.phone, isPhoneMasked)}</span>
-                      </td>
-                      <td>
-                        <span className="dim" style={{ fontSize: 12 }}>{msg.accountNo}</span>
-                      </td>
-                      <td>
-                        <strong>RM {msg.arrears?.toFixed(2)}</strong>
-                      </td>
-                      <td>
-                        <div className="inbox-snippet-text">{msg.lastSnippet}</div>
-                      </td>
-                      <td>
-                        <span className="dim" style={{ fontSize: 12 }}>{msg.timestamp}</span>
-                      </td>
-                      <td>
-                        <Badge tone={msg.sentiment === "Positive" ? "good" : msg.sentiment === "Negative" ? "bad" : "warn"}>
-                          {msg.sentiment}
-                        </Badge>
-                      </td>
-                      <td>
-                        {msg.isAiPaused ? (
-                          <span className="badge bad" style={{ fontSize: 11 }}>
-                            Human Takeover
-                          </span>
-                        ) : (
-                          <span className="badge ok" style={{ fontSize: 11 }}>
-                            AI Auto-Pilot
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ textAlign: "center" }}>
-                        <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
-                          <button
-                            className="btn-ghost"
-                            style={{
-                              padding: "4px 8px",
-                              fontSize: 11,
-                              fontWeight: 600,
-                              color: msg.isAiPaused ? "var(--good)" : "var(--critical)",
-                              borderColor: msg.isAiPaused ? "var(--good)" : "var(--critical)",
-                              background: msg.isAiPaused ? "var(--good-soft)" : "rgba(239, 68, 68, 0.08)",
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleAiPause(msg.id);
-                            }}
-                            title={msg.isAiPaused ? "Resume AI Auto-Pilot" : "Stop AI (Human Takeover)"}
-                          >
-                            {msg.isAiPaused ? "Resume AI" : "Stop AI"}
-                          </button>
-                          <button
-                            className="btn-ghost"
-                            style={{ padding: "4px 10px", fontSize: 11.5 }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveMessage({ ...msg, channel: "WhatsApp" });
-                            }}
-                          >
-                            View Chat
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-      )}
-
-      {/* Sub-section 2: Email Campaign & Inbound Engagement Table */}
-      {(activeTab === "all" || activeTab === "email") && (
-        <Panel
-          title="Email Engagement & Inbound Inquiries"
-          sub="Electronic billing statements, open telemetry, and customer reply letters."
-        >
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Customer Name</th>
-                  <th>Email</th>
-                  <th>Account No</th>
-                  <th>Subject / Template</th>
-                  <th>Sent Date</th>
-                  <th>Open Telemetry</th>
-                  <th style={{ minWidth: 240 }}>Inbound Reply</th>
-                  <th>Sentiment</th>
-                  <th>Outcome</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEmail.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} style={{ textAlign: "center", padding: "30px", color: "var(--text-dim)" }}>
-                      No email interactions match your search / sentiment filters.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredEmail.map((em) => (
-                    <tr
-                      key={em.id}
+                      key={cem.id}
                       className="clickable-row"
                       onClick={() =>
                         setActiveMessage({
-                          ...em,
-                          channel: "Email",
-                          lastSnippet: em.replySnippet,
-                          phone: em.email,
-                          history: [
-                            { sender: "Indah Water Billing", text: em.subject, time: em.sentDate },
-                            { sender: "Customer", text: em.replySnippet, time: "Reply received" },
+                          ...cem,
+                          channel: "Customer Email",
+                          email: cem.senderEmail,
+                          phone: cem.senderEmail,
+                          lastSnippet: cem.inboundSnippet,
+                          history: cem.history || [
+                            { sender: `Customer (${cem.senderEmail})`, text: cem.inboundSnippet, time: cem.sentDate },
                           ],
                         })
                       }
                       style={{ cursor: "pointer" }}
                     >
-                      <td><strong>{em.customerName}</strong></td>
-                      <td><span className="mono-num" style={{ fontSize: 12 }}>{em.email}</span></td>
-                      <td><span className="dim" style={{ fontSize: 12 }}>{em.accountNo}</span></td>
-                      <td><span style={{ fontSize: 12.5 }}>{em.subject}</span></td>
-                      <td><span className="dim" style={{ fontSize: 12 }}>{em.sentDate}</span></td>
-                      <td><span className="badge ok" style={{ fontSize: 11 }}>{em.openStatus}</span></td>
-                      <td><div className="inbox-snippet-text">{em.replySnippet}</div></td>
+                      <td><strong>{cem.customerName}</strong></td>
+                      <td><span className="mono-num" style={{ fontSize: 12 }}>{cem.senderEmail}</span></td>
+                      <td><span className="badge" style={{ background: "rgba(11, 127, 196, 0.12)", color: "var(--brand)", fontSize: 11, fontWeight: 600 }}>IWK Support Desk</span></td>
+                      <td><span className="dim" style={{ fontSize: 12 }}>{cem.accountNo}</span></td>
+                      <td><span style={{ fontSize: 12.5, fontWeight: 500 }}>{cem.subject}</span></td>
+                      <td><span className="dim" style={{ fontSize: 12 }}>{cem.sentDate}</span></td>
+                      <td><span className="badge ok" style={{ fontSize: 11 }}>{cem.openStatus}</span></td>
+                      <td><div className="inbox-snippet-text">{cem.inboundSnippet}</div></td>
                       <td>
-                        <Badge tone={em.sentiment === "Positive" ? "good" : em.sentiment === "Negative" ? "bad" : "warn"}>
-                          {em.sentiment}
+                        <Badge tone={cem.sentiment === "Positive" ? "good" : cem.sentiment === "Negative" ? "bad" : "warn"}>
+                          {cem.sentiment}
                         </Badge>
                       </td>
-                      <td><span className="dim" style={{ fontSize: 12 }}>{em.outcome}</span></td>
+                      <td><span className="dim" style={{ fontSize: 12 }}>{cem.outcome}</span></td>
+                      <td style={{ textAlign: "center" }}>
+                        <button
+                          type="button"
+                          className="btn-solid"
+                          style={{ padding: "4px 10px", fontSize: 11.5 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMessage({
+                              ...cem,
+                              channel: "Customer Email",
+                              email: cem.senderEmail,
+                              phone: cem.senderEmail,
+                              lastSnippet: cem.inboundSnippet,
+                              history: cem.history || [
+                                { sender: `Customer (${cem.senderEmail})`, text: cem.inboundSnippet, time: cem.sentDate },
+                              ],
+                            });
+                          }}
+                        >
+                          Reply
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -1059,7 +1488,9 @@ export default function UnifiedInbox() {
         </Panel>
       )}
 
-      {/* Sub-section 3: SMS Reminders & Reply Interactions Table */}
+      {/* =============================================================
+          SUB-SECTION 2: SMS ALERTS & INBOUND INTERACTIONS TABLE
+          ============================================================= */}
       {(activeTab === "all" || activeTab === "sms") && (
         <Panel
           title="SMS Alerts & Inbound Interactions"
@@ -1126,6 +1557,190 @@ export default function UnifiedInbox() {
       )}
 
       {/* =============================================================
+          SUB-SECTION 3: SUPERVISOR'S EMAIL ENGAGEMENT & INBOUND INQUIRIES
+          ============================================================= */}
+      {(activeTab === "all" || activeTab === "email") && (
+        <Panel
+          title="Supervisor's Email Engagement & Inbound Inquiries"
+          sub="Electronic billing statements, open telemetry, and customer reply letters."
+        >
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Customer Name</th>
+                  <th>Email</th>
+                  <th>Account No</th>
+                  <th>Subject / Template</th>
+                  <th>Sent Date</th>
+                  <th>Open Telemetry</th>
+                  <th style={{ minWidth: 240 }}>Inbound Reply</th>
+                  <th>Sentiment</th>
+                  <th>Outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEmail.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} style={{ textAlign: "center", padding: "30px", color: "var(--text-dim)" }}>
+                      No email interactions match your search / sentiment filters.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredEmail.map((em) => (
+                    <tr
+                      key={em.id}
+                      className="clickable-row"
+                      onClick={() =>
+                        setActiveMessage({
+                          ...em,
+                          channel: "Email",
+                          lastSnippet: em.replySnippet,
+                          phone: em.email,
+                          history: [
+                            { sender: "Indah Water Billing", text: em.subject, time: em.sentDate },
+                            { sender: "Customer", text: em.replySnippet, time: "Reply received" },
+                          ],
+                        })
+                      }
+                      style={{ cursor: "pointer" }}
+                    >
+                      <td><strong>{em.customerName}</strong></td>
+                      <td><span className="mono-num" style={{ fontSize: 12 }}>{em.email}</span></td>
+                      <td><span className="dim" style={{ fontSize: 12 }}>{em.accountNo}</span></td>
+                      <td><span style={{ fontSize: 12.5 }}>{em.subject}</span></td>
+                      <td><span className="dim" style={{ fontSize: 12 }}>{em.sentDate}</span></td>
+                      <td><span className="badge ok" style={{ fontSize: 11 }}>{em.openStatus}</span></td>
+                      <td><div className="inbox-snippet-text">{em.replySnippet}</div></td>
+                      <td>
+                        <Badge tone={em.sentiment === "Positive" ? "good" : em.sentiment === "Negative" ? "bad" : "warn"}>
+                          {em.sentiment}
+                        </Badge>
+                      </td>
+                      <td><span className="dim" style={{ fontSize: 12 }}>{em.outcome}</span></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      )}
+
+      {/* =============================================================
+          SUB-SECTION 4: WHATSAPP E-BILL CHAT THREADS TABLE
+          ============================================================= */}
+      {(activeTab === "all" || activeTab === "whatsapp") && (
+        <Panel
+          title="WhatsApp e-Bill Portal Messages"
+          sub="Interactive two-way conversations, billing inquiries, and human takeover queue."
+        >
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Customer Name</th>
+                  <th>Phone Number (PDPA)</th>
+                  <th>Account No</th>
+                  <th>Arrears</th>
+                  <th style={{ minWidth: 260 }}>Latest Conversation Snippet</th>
+                  <th>Timestamp</th>
+                  <th>Sentiment</th>
+                  <th>AI Control Mode</th>
+                  <th style={{ textAlign: "center" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredWhatsApp.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} style={{ textAlign: "center", padding: "30px", color: "var(--text-dim)" }}>
+                      No WhatsApp threads match your search / sentiment filters.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredWhatsApp.map((msg) => (
+                    <tr
+                      key={msg.id}
+                      className="clickable-row"
+                      onClick={() => setActiveMessage({ ...msg, channel: "WhatsApp" })}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <td>
+                        <strong>{msg.customerName}</strong>
+                      </td>
+                      <td>
+                        <span className="mono-num">{maskPhonePDPA(msg.phone, isPhoneMasked)}</span>
+                      </td>
+                      <td>
+                        <span className="dim" style={{ fontSize: 12 }}>{msg.accountNo}</span>
+                      </td>
+                      <td>
+                        <strong>RM {msg.arrears?.toFixed(2)}</strong>
+                      </td>
+                      <td>
+                        <div className="inbox-snippet-text">{msg.lastSnippet}</div>
+                      </td>
+                      <td>
+                        <span className="dim" style={{ fontSize: 12 }}>{msg.timestamp}</span>
+                      </td>
+                      <td>
+                        <Badge tone={msg.sentiment === "Positive" ? "good" : msg.sentiment === "Negative" ? "bad" : "warn"}>
+                          {msg.sentiment}
+                        </Badge>
+                      </td>
+                      <td>
+                        {msg.isAiPaused ? (
+                          <span className="badge bad" style={{ fontSize: 11 }}>
+                            🔴 Human Takeover
+                          </span>
+                        ) : (
+                          <span className="badge ok" style={{ fontSize: 11 }}>
+                            🟢 AI Auto-Pilot
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: "center" }}>
+                        <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                          <button
+                            className="btn-ghost"
+                            style={{
+                              padding: "4px 8px",
+                              fontSize: 11,
+                              fontWeight: 600,
+                              color: msg.isAiPaused ? "var(--good)" : "var(--critical)",
+                              borderColor: msg.isAiPaused ? "var(--good)" : "var(--critical)",
+                              background: msg.isAiPaused ? "var(--good-soft)" : "rgba(239, 68, 68, 0.08)",
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleAiPause(msg.id);
+                            }}
+                            title={msg.isAiPaused ? "Resume AI Auto-Pilot" : "Stop AI (Human Takeover)"}
+                          >
+                            {msg.isAiPaused ? "Resume AI" : "Stop AI"}
+                          </button>
+                          <button
+                            className="btn-ghost"
+                            style={{ padding: "4px 10px", fontSize: 11.5 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMessage({ ...msg, channel: "WhatsApp" });
+                            }}
+                          >
+                            View Chat
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      )}
+
+      {/* =============================================================
           INTERACTIVE CONVERSATION MODAL (WITH AI TAKEOVER & ATTACHMENTS)
           ============================================================= */}
       {activeMessage && (
@@ -1182,7 +1797,7 @@ export default function UnifiedInbox() {
                       style={{ fontSize: 12, padding: "5px 10px", color: "var(--warning)", borderColor: "var(--warning)" }}
                       onClick={() => toggleAiPause(activeMessage.id)}
                     >
-                      Pause AI (Take Over)
+                      ⏸ Pause AI (Take Over)
                     </button>
                   )}
                 </div>
@@ -1205,8 +1820,8 @@ export default function UnifiedInbox() {
               >
                 <span>
                   {activeMessage.isAiPaused
-                    ? "AI Paused — Human Representative in Control (Manual replies enabled)"
-                    : "AI Auto-Pilot Active — Conversational agent responding automatically"}
+                    ? "🔴 AI Paused — Human Representative in Control (Manual replies enabled)"
+                    : "🟢 AI Auto-Pilot Active — Conversational agent responding automatically"}
                 </span>
                 {!activeMessage.isAiPaused && (
                   <button
@@ -1215,7 +1830,7 @@ export default function UnifiedInbox() {
                     onClick={handleTriggerAiReply}
                     disabled={isAiTyping}
                   >
-                    Simulate AI Reply Now
+                    Simulate AI Reply Now ⚡
                   </button>
                 )}
               </div>
@@ -1260,7 +1875,7 @@ export default function UnifiedInbox() {
                           }}
                         >
                           <span style={{ fontSize: 18 }}>
-                            {msg.attachment.type === "qrcode" ? "QR" : msg.attachment.type === "receipt" ? "Receipt" : "Document"}
+                            {msg.attachment.type === "qrcode" ? "📱" : msg.attachment.type === "receipt" ? "🧾" : "📄"}
                           </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 600, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1349,7 +1964,7 @@ export default function UnifiedInbox() {
                   fontSize: 12,
                 }}
               >
-                <span><strong>{selectedAttachment.name}</strong> ({selectedAttachment.size})</span>
+                <span>📎 <strong>{selectedAttachment.name}</strong> ({selectedAttachment.size})</span>
                 <button
                   type="button"
                   style={{ background: "none", border: "none", cursor: "pointer", color: "var(--bad)", fontWeight: "bold" }}
@@ -1371,7 +1986,7 @@ export default function UnifiedInbox() {
                   onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
                   title="Attach file or bill document"
                 >
-                  Attach
+                  📎
                 </button>
 
                 {/* Attachment Options Dropdown */}
@@ -1546,6 +2161,543 @@ export default function UnifiedInbox() {
                 placeholder="e.g. Escalation to supervisor queue for personal officer outreach."
                 value={newStepFallback}
                 onChange={(e) => setNewStepFallback(e.target.value)}
+              />
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* =============================================================
+          GHL & TWILIO INTEGRATION SETTINGS / LIVE TEST MODAL
+          ============================================================= */}
+      {showIntegrationModal && (
+        <Modal
+          title="Omnichannel Gateway: GoHighLevel (GHL) & Twilio SMS"
+          onClose={() => setShowIntegrationModal(false)}
+          wide
+          footer={
+            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+              <div style={{ fontSize: 12, color: "var(--text-dim)" }}>
+                {smsSendStatus && <span>{smsSendStatus}</span>}
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setShowIntegrationModal(false)}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn-solid"
+                  onClick={() => {
+                    saveTwilioConfig(twilioConfig);
+                    saveGhlConfig(ghlConfig);
+                    setSmsSendStatus("Configuration saved successfully.");
+                    setTimeout(() => setSmsSendStatus(""), 3000);
+                  }}
+                >
+                  Save Configuration
+                </button>
+              </div>
+            </div>
+          }
+        >
+          <div>
+            {/* Modal Tabs: Twilio vs GHL */}
+            <div style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--border)", paddingBottom: 10, marginBottom: 16 }}>
+              <button
+                type="button"
+                className={`btn-ghost ${integrationModalTab === "twilio" ? "active" : ""}`}
+                style={{
+                  fontWeight: 600,
+                  background: integrationModalTab === "twilio" ? "var(--brand)" : "transparent",
+                  color: integrationModalTab === "twilio" ? "#fff" : "var(--text)",
+                }}
+                onClick={() => setIntegrationModalTab("twilio")}
+              >
+                📱 Twilio SMS Integration
+              </button>
+              <button
+                type="button"
+                className={`btn-ghost ${integrationModalTab === "ghl" ? "active" : ""}`}
+                style={{
+                  fontWeight: 600,
+                  background: integrationModalTab === "ghl" ? "var(--brand)" : "transparent",
+                  color: integrationModalTab === "ghl" ? "#fff" : "var(--text)",
+                }}
+                onClick={() => setIntegrationModalTab("ghl")}
+              >
+                🌐 GoHighLevel (GHL) Unified Inbox
+              </button>
+            </div>
+
+            {/* Twilio Section */}
+            {integrationModalTab === "twilio" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ padding: "10px 14px", background: "var(--surface-2)", borderRadius: 8, fontSize: 12.5, lineHeight: 1.5 }}>
+                  <strong>Twilio Live SMS Carrier Dispatch:</strong> Connect your Twilio credentials below to send live real-time SMS messages to Malaysian debtors directly from the dashboard and automated workflows.
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="field">
+                    <label>Twilio Account SID</label>
+                    <input
+                      type="text"
+                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      value={twilioConfig.accountSid || ""}
+                      onChange={(e) => setTwilioConfig({ ...twilioConfig, accountSid: e.target.value })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label>Twilio Auth Token</label>
+                    <input
+                      type="password"
+                      placeholder="Your Twilio Auth Token"
+                      value={twilioConfig.authToken || ""}
+                      onChange={(e) => setTwilioConfig({ ...twilioConfig, authToken: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="field">
+                    <label>Twilio Sender Phone Number (E.164)</label>
+                    <input
+                      type="text"
+                      placeholder="+1234567890 or Twilio Number"
+                      value={twilioConfig.fromNumber || ""}
+                      onChange={(e) => setTwilioConfig({ ...twilioConfig, fromNumber: e.target.value })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label>Connection Status</label>
+                    <div style={{ paddingTop: 8 }}>
+                      <span className={`badge ${twilioConfig.accountSid ? "ok" : "warn"}`}>
+                        {twilioConfig.accountSid ? "● Twilio Configured" : "○ Not Configured"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Live SMS Test Tool */}
+                <div style={{ marginTop: 10, padding: 14, border: "1px dashed var(--brand)", borderRadius: 8, background: "rgba(11, 127, 196, 0.05)" }}>
+                  <h4 style={{ margin: "0 0 8px 0", fontSize: 13, color: "var(--brand)" }}>⚡ Live SMS Dispatch Tester</h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "220px 1fr auto", gap: 10, alignItems: "center" }}>
+                    <input
+                      type="text"
+                      placeholder="Recipient: +601xxxxxxx"
+                      value={testInputNumber}
+                      onChange={(e) => setTestInputNumber(e.target.value)}
+                      style={{ fontSize: 12 }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="SMS message text..."
+                      value={testInputMessage}
+                      onChange={(e) => setTestInputMessage(e.target.value)}
+                      style={{ fontSize: 12 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn-solid"
+                      style={{ fontSize: 12, padding: "6px 14px" }}
+                      disabled={isSendingSms}
+                      onClick={async () => {
+                        const num = testInputNumber.trim();
+                        const msg = testInputMessage.trim();
+                        if (!num || !msg) return;
+                        setIsSendingSms(true);
+                        setSmsSendStatus("Sending test SMS...");
+                        try {
+                          saveTwilioConfig(twilioConfig);
+                          await sendTwilioSms({ to: num, body: msg });
+                          setSmsSendStatus("✓ Test SMS successfully dispatched via Twilio!");
+
+                          // Append to live SMS table for dashboard visibility
+                          const newSmsEntry = {
+                            id: `SMS-${Date.now()}`,
+                            customerName: "Active Contact (Direct Dispatch)",
+                            phone: num,
+                            accountNo: "6199-LIVE-" + Math.floor(1000 + Math.random() * 9000),
+                            campaign: "Real-Time Twilio SMS",
+                            deliveryStatus: "Delivered",
+                            inboundText: msg,
+                            timestamp: "Just now",
+                            sentiment: "Positive",
+                            intentFlag: "Dispatched & Delivered",
+                            statusTone: "good",
+                          };
+                          setSmsMessages((prev) => {
+                            const updated = [newSmsEntry, ...prev];
+                            try {
+                              localStorage.setItem("iwk_live_sms_messages", JSON.stringify(updated));
+                            } catch (e) {}
+                            return updated;
+                          });
+                        } catch (err) {
+                          setSmsSendStatus(`ℹ️ Twilio dispatch notice: ${err.message}`);
+                        } finally {
+                          setIsSendingSms(false);
+                        }
+                      }}
+                    >
+                      {isSendingSms ? "Sending..." : "Send Live SMS"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* GHL Section */}
+            {integrationModalTab === "ghl" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ padding: "10px 14px", background: "var(--surface-2)", borderRadius: 8, fontSize: 12.5, lineHeight: 1.5 }}>
+                  <strong>GoHighLevel (GHL) Unified Inbox Provider:</strong> GHL acts as the omni-channel hub for all email conversations and incoming debtor inquiries. Incoming inquiries trigger automatic AI sentiment analysis and auto-pilot draft replies.
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div className="field">
+                    <label>GHL Location ID</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. loc_iwk_omnichannel_demo"
+                      value={ghlConfig.locationId || "loc_iwk_demo_showcase"}
+                      onChange={(e) => setGhlConfig({ ...ghlConfig, locationId: e.target.value })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label>GHL API / Bearer Token</label>
+                    <input
+                      type="password"
+                      placeholder="ghl_live_token_xxxxxxxx"
+                      value={ghlConfig.apiKey || "ghl_bearer_active_demo_token"}
+                      onChange={(e) => setGhlConfig({ ...ghlConfig, apiKey: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>GHL Unified Inbox Webhook URL (Live Sync)</label>
+                  <input
+                    type="text"
+                    placeholder="https://services.leadconnectorhq.com/hooks/..."
+                    value={ghlConfig.webhookUrl || ""}
+                    onChange={(e) => setGhlConfig({ ...ghlConfig, webhookUrl: e.target.value })}
+                  />
+                  <span className="dim" style={{ fontSize: 11, marginTop: 4 }}>
+                    Dispatches every reply and debtor interaction to GoHighLevel conversations stream.
+                  </span>
+                </div>
+
+                <div style={{ padding: 12, borderRadius: 8, background: "var(--good-soft)", border: "1px solid var(--good)", fontSize: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--good)", fontWeight: 600 }}>
+                    <span>●</span> GHL Showcase Status: Connected & Serving Live Dummy Showcase
+                  </div>
+                  <div style={{ marginTop: 4, color: "var(--text-dim)" }}>
+                    All email and omnichannel records in the Unified Inbox tab are synced with GoHighLevel conversation schema.
+                  </div>
+                </div>
+
+                {/* Quick Live Email Test Dispatcher */}
+                <div style={{ marginTop: 10, padding: 14, border: "1px dashed var(--brand)", borderRadius: 8, background: "rgba(11, 127, 196, 0.05)" }}>
+                  <h4 style={{ margin: "0 0 8px 0", fontSize: 13, color: "var(--brand)" }}>⚡ Live Email Dispatch & Trigger Tester</h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                    <input
+                      type="email"
+                      id="testEmailAddress"
+                      placeholder="Your Personal Email (e.g. you@gmail.com)"
+                      defaultValue="meranwork83@gmail.com"
+                      style={{ fontSize: 12 }}
+                    />
+                    <input
+                      type="text"
+                      id="testEmailSubject"
+                      placeholder="Email Subject"
+                      defaultValue="IWK Notice: Penyata Tunggakan Bil Perkhidmatan Pembetungan"
+                      style={{ fontSize: 12 }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <input
+                      type="text"
+                      id="testEmailBody"
+                      placeholder="Email body snippet..."
+                      defaultValue="Notis Peringatan Mesra: Sila jelaskan tunggakan akaun IWK anda untuk mengelakkan gangguan perkhidmatan."
+                      style={{ fontSize: 12, flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn-solid"
+                      style={{ fontSize: 12, padding: "6px 14px", whiteSpace: "nowrap" }}
+                      disabled={isSendingSms}
+                      onClick={async () => {
+                        const targetEmail = document.getElementById("testEmailAddress").value;
+                        const subject = document.getElementById("testEmailSubject").value;
+                        const body = document.getElementById("testEmailBody").value;
+                        if (!targetEmail) return;
+
+                        setIsSendingSms(true);
+                        setSmsSendStatus("Dispatching live email via mail bridge...");
+                        try {
+                          const res = await fetch("http://localhost:3001/api/send-email", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              to: targetEmail,
+                              subject: subject || "IWK Customer Notice",
+                              body: body,
+                              accountNo: "6199-LIVE",
+                            }),
+                          });
+                          const data = await res.json();
+                          if (!data.success) throw new Error(data.error || "Failed to send");
+
+                          setSmsSendStatus(`✓ Live Email successfully dispatched to ${targetEmail}!`);
+
+                          // Append to live Email table
+                          const newEmailEntry = {
+                            id: `EM-${Date.now().toString().slice(-4)}`,
+                            customerName: targetEmail.split("@")[0],
+                            email: targetEmail,
+                            accountNo: "6199-EM-" + Math.floor(1000 + Math.random() * 9000),
+                            subject: subject,
+                            sentDate: "Just now",
+                            openStatus: "Delivered (1x)",
+                            replySnippet: body,
+                            sentiment: "Positive",
+                            outcome: "Notice Dispatched",
+                            statusTone: "good",
+                          };
+                          setEmailMessages((prev) => [newEmailEntry, ...prev]);
+                        } catch (err) {
+                          setSmsSendStatus(`ℹ️ Email dispatch notice: ${err.message}`);
+                        } finally {
+                          setIsSendingSms(false);
+                        }
+                      }}
+                    >
+                      Send Live Test Email
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {/* =============================================================
+          MODAL: COMPOSE NEW OUTBOUND EMAIL (Rep → Customer First Contact)
+          ============================================================= */}
+      {showComposeModal && (
+        <Modal
+          title="✉️ Compose New Email to Customer"
+          onClose={() => setShowComposeModal(false)}
+          wide
+          footer={
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", gap: 10 }}>
+              <span style={{ fontSize: 13, color: composeStatus.startsWith("✅") ? "#059669" : composeStatus.startsWith("❌") ? "#dc2626" : "#6b7280" }}>
+                {composeStatus}
+              </span>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button type="button" className="btn-ghost" onClick={() => setShowComposeModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-solid"
+                  style={{ background: "#059669", opacity: composeSending ? 0.6 : 1 }}
+                  disabled={composeSending || !composeToEmail.trim() || !composeBody.trim()}
+                  onClick={handleSendCompose}
+                >
+                  {composeSending ? "Sending..." : "📤 Send Email"}
+                </button>
+              </div>
+            </div>
+          }
+        >
+          <form onSubmit={handleSendCompose} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", display: "block", marginBottom: 4 }}>
+                  Customer Email Address *
+                </label>
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="customer@gmail.com"
+                  value={composeToEmail}
+                  onChange={(e) => setComposeToEmail(e.target.value)}
+                  required
+                  style={{ width: "100%", fontSize: 13 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", display: "block", marginBottom: 4 }}>
+                  Customer Name
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Ahmad bin Hassan"
+                  value={composeCustomerName}
+                  onChange={(e) => setComposeCustomerName(e.target.value)}
+                  style={{ width: "100%", fontSize: 13 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", display: "block", marginBottom: 4 }}>
+                  Account No
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. 6199-1234-5678"
+                  value={composeAccountNo}
+                  onChange={(e) => setComposeAccountNo(e.target.value)}
+                  style={{ width: "100%", fontSize: 13 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", display: "block", marginBottom: 4 }}>
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. IWK Billing Overdue Notice"
+                  value={composeSubject}
+                  onChange={(e) => setComposeSubject(e.target.value)}
+                  style={{ width: "100%", fontSize: 13 }}
+                />
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", display: "block", marginBottom: 4 }}>
+                Message Body *
+              </label>
+              <textarea
+                className="form-input"
+                rows={6}
+                placeholder="Write your email message here... e.g. Dear Ahmad, your IWK account 6199-1234-5678 has an overdue balance of RM 350. Please settle before 15 Oct 2026..."
+                value={composeBody}
+                onChange={(e) => setComposeBody(e.target.value)}
+                required
+                style={{ width: "100%", fontSize: 13, resize: "vertical" }}
+              />
+            </div>
+            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#166534" }}>
+              📧 This email will be sent FROM <strong>IWK Support Desk</strong> TO the customer's email above. When the customer replies, it will automatically appear in this Support Email thread.
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* =============================================================
+          MODAL: RECEIVE INBOUND EMAIL FROM PERSONAL GMAIL
+          ============================================================= */}
+      {showInboundEmailModal && (
+        <Modal
+          title="Receive Customer Email"
+          onClose={() => setShowInboundEmailModal(false)}
+          wide
+          footer={
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, width: "100%" }}>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => setShowInboundEmailModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-solid"
+                disabled={!inboundSenderEmail.trim() || !inboundEmailMessage.trim()}
+                onClick={async () => {
+                  const sEmail = inboundSenderEmail.trim();
+                  const sName = inboundSenderName.trim() || sEmail.split("@")[0];
+                  const sSubj = inboundEmailSubject.trim() || "Pertanyaan Tunggakan Bil IWK";
+                  const sMsg = inboundEmailMessage.trim();
+
+                  // Create new live entry for Support Email
+                  const newEntry = {
+                    id: `CUST-EM-${Date.now()}`,
+                    customerName: sName,
+                    senderEmail: sEmail,
+                    handledBy: "IWK Support Desk",
+                    accountNo: "6199-" + Math.floor(1000 + Math.random() * 9000) + "-8812",
+                    subject: sSubj,
+                    sentDate: "Just now",
+                    inboundSnippet: sMsg,
+                    openStatus: "Received (Inbound)",
+                    sentiment: "Neutral",
+                    outcome: "Awaiting Rep Reply",
+                    statusTone: "warn",
+                    history: [
+                      { sender: `Customer (${sEmail})`, text: sMsg, time: "Just now" },
+                    ],
+                  };
+
+                  setCustomerEmails((prev) => [newEntry, ...prev]);
+
+                  setShowInboundEmailModal(false);
+                  setInboundSenderEmail("");
+                  setInboundSenderName("");
+                  setInboundEmailSubject("");
+                  setInboundEmailMessage("");
+                }}
+              >
+                Simulate Inbound Inquiry
+              </button>
+            </div>
+          }
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ padding: "10px 14px", background: "var(--surface-2)", borderRadius: 8, fontSize: 12.5, lineHeight: 1.5 }}>
+              Apni personal Gmail address niche enter karein. Ye query foran table me <strong>Mohd Danial</strong> ke sabse upar show hogi. Phir jab aap table me <strong>Reply</strong> dabayenge to live email aapki personal Gmail inbox me deliver hogi!
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div className="field">
+                <label>Your Personal Gmail (Sender Email)</label>
+                <input
+                  type="email"
+                  placeholder="e.g. yourname@gmail.com"
+                  value={inboundSenderEmail}
+                  onChange={(e) => setInboundSenderEmail(e.target.value)}
+                />
+              </div>
+              <div className="field">
+                <label>Your Name / Customer Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Saad Khan"
+                  value={inboundSenderName}
+                  onChange={(e) => setInboundSenderName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Email Subject</label>
+              <input
+                type="text"
+                placeholder="e.g. Pertanyaan status pembayaran akaun IWK"
+                value={inboundEmailSubject}
+                onChange={(e) => setInboundEmailSubject(e.target.value)}
+              />
+            </div>
+
+            <div className="field">
+              <label>Message Content (What the customer is asking)</label>
+              <textarea
+                rows={4}
+                placeholder="Type your question or query here (e.g. Salam, saya mahu semak baki tunggakan terkini dan mohon resit...)"
+                value={inboundEmailMessage}
+                onChange={(e) => setInboundEmailMessage(e.target.value)}
               />
             </div>
           </div>
