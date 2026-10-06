@@ -94,9 +94,16 @@ app.post('/api/send-sms', async (req, res) => {
     const cleanTo = to.replace(/\s+/g, '').replace(/-/g, '');
     const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`;
     const params = new URLSearchParams();
+    // Malaysia (+60): operators require the "RM 0.00" header and a brand name in every SMS, otherwise the
+    // text is truncated or the message fails (Twilio error 30008). Added automatically; other countries untouched.
+    let smsBody = body;
+    if (cleanTo.startsWith('+60') && !/^\s*RM\s?0\.00/i.test(smsBody)) {
+      smsBody = `RM 0.00 ${/iwk|indah\s*water/i.test(smsBody) ? '' : 'IWK: '}${smsBody}`;
+    }
+
     params.append('To', cleanTo);
     params.append('From', from);
-    params.append('Body', body);
+    params.append('Body', smsBody);
 
     const authHeader = 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64');
     const twilioRes = await fetch(url, {
