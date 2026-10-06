@@ -16,7 +16,7 @@ const AGENTS = [
     description: "Courteous Careline tone, bilingual English & Malay mix.",
     voices: CONFIG.vapi.voices?.manglish || [
       { id: "2LyhoWYWTvmqt5r3iFg4", label: "Voice 1", provider: "11labs", model: "eleven_v3" },
-      { id: "2k8RkyGz6ut0S9Qq5upN", label: "Voice 2", provider: "11labs", model: "eleven_turbo_v2_5" },
+      { id: "D1360BR3zCp9v0EXUpO4", label: "Voice 2", provider: "11labs", model: "eleven_v3" },
     ],
   },
   {
