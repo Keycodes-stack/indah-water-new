@@ -19,8 +19,8 @@ app.use(cors());
 app.use(express.json());
 
 // Target Support Email Credentials
-const GMAIL_USER = 'coutomerr@gmail.com';
-const GMAIL_PASS = 'wvofrlfpjwnmpbjn';
+const GMAIL_USER = process.env.GMAIL_USER || 'coutomerr@gmail.com';
+const GMAIL_PASS = process.env.GMAIL_PASS || 'wvofrlfpjwnmpbjn';
 
 // SMTP Transporter for Sending Real Emails
 const transporter = nodemailer.createTransport({
@@ -228,6 +228,12 @@ app.get('/api/fetch-inbound-emails', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`[MAIL SERVICE] IWK Email Bridge running on http://localhost:${PORT} with user ${GMAIL_USER}`);
-});
+// `npm run mail` runs this file directly and starts the bridge on port 3001.
+// On Netlify the same app is imported by netlify/functions/api.mjs instead.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`[MAIL SERVICE] IWK Email Bridge running on http://localhost:${PORT} with user ${GMAIL_USER}`);
+  });
+}
+
+module.exports = { app };

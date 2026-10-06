@@ -2,7 +2,7 @@
    Workflow engine — actually runs the nodes of a workflow.
 
    Delivery goes through the integrations this project already has:
-     • Email  → mail-service.cjs  (POST http://localhost:3001/api/send-email)
+     • Email  → mail-service.cjs  (POST /api/send-email — localhost:3001 locally, a Netlify Function when deployed)
      • SMS    → sendTwilioSms()   (omnichannel.js)
      • Distress alert email → n8n "hard-customer-alert" webhook
                               (sendLiveAlertEmail() in omnichannel.js)
@@ -13,8 +13,9 @@
    ============================================================ */
 
 import { sendTwilioSms, sendLiveAlertEmail, triggerGhlWebhook, getGhlConfig } from "./omnichannel.js";
+import { apiUrl, IS_LOCAL_API } from "./api.js";
 
-export const MAIL_SERVICE_URL = "http://localhost:3001/api/send-email";
+export const MAIL_SERVICE_URL = apiUrl("/api/send-email");
 const SETTINGS_KEY = "iwk_workflow_settings";
 
 const DEFAULTS = { testEmail: "", testPhone: "", limit: 3, distressActive: true };
@@ -113,7 +114,11 @@ async function sendEmail({ to, subject, body, accountNo }) {
       body: JSON.stringify({ to, subject, body, accountNo }),
     });
   } catch {
-    throw new Error("Mail service is not reachable on port 3001. Start it with: npm run mail");
+    throw new Error(
+      IS_LOCAL_API
+        ? "Mail service is not reachable on port 3001. Start it with: npm run mail"
+        : "Mail service is not reachable. Check the Netlify function (/api/send-email) and its deploy log."
+    );
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Mail service error ${res.status}`);

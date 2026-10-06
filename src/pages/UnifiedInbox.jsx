@@ -12,6 +12,7 @@ import { GroupedBarBox, LineChartBox, Legend, SERIES } from "../components/chart
 import { LockIcon, UnlockIcon, PauseIcon, PlayIcon } from "../components/icons.jsx";
 import SupportWorkflows from "../components/SupportWorkflows.jsx";
 import { useData } from "../db/store.jsx";
+import { apiUrl, IS_LOCAL_API } from "../lib/api.js";
 import { rm, rmCompact, num, pct } from "../lib/format.js";
 import {
   maskPhonePDPA,
@@ -332,9 +333,12 @@ export default function UnifiedInbox() {
 
   // Auto-sync polling: check for new replies sent to coutomerr@gmail.com every 8 seconds
   useEffect(() => {
+    let inFlight = false; // never stack IMAP calls (each one is a Gmail login)
     const fetchLatestReplies = async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
-        const res = await fetch("http://localhost:3001/api/fetch-inbound-emails");
+        const res = await fetch(apiUrl("/api/fetch-inbound-emails"));
         const data = await res.json();
         if (data.success && data.emails && data.emails.length > 0) {
           // Check if user previously cleared the inbox
@@ -406,11 +410,14 @@ export default function UnifiedInbox() {
         }
       } catch (e) {
         // silent background poll
+      } finally {
+        inFlight = false;
       }
     };
 
     fetchLatestReplies();
-    const interval = setInterval(fetchLatestReplies, 8000);
+    // 8s against the local bridge as before; a deployed function does a full IMAP login per call, so go gentler.
+    const interval = setInterval(fetchLatestReplies, IS_LOCAL_API ? 8000 : 20000);
     return () => clearInterval(interval);
   }, []);
 
@@ -642,7 +649,7 @@ export default function UnifiedInbox() {
     // If channel is Email, dispatch real email to recipient via local mail bridge
     if (activeMessage.channel === "Email") {
       const recipient = activeMessage.email || activeMessage.phone;
-      fetch("http://localhost:3001/api/send-email", {
+      fetch(apiUrl("/api/send-email"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -708,7 +715,7 @@ export default function UnifiedInbox() {
       const recipient = activeMessage.senderEmail || activeMessage.email;
 
       // 1. Send REAL LIVE email from customerrr804@gmail.com via Local Mail Bridge
-      fetch("http://localhost:3001/api/send-email", {
+      fetch(apiUrl("/api/send-email"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -826,7 +833,7 @@ export default function UnifiedInbox() {
     };
 
     try {
-      const res = await fetch("http://localhost:3001/api/send-email", {
+      const res = await fetch(apiUrl("/api/send-email"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1337,7 +1344,7 @@ export default function UnifiedInbox() {
                 title="Fetch latest emails received by coutomerr@gmail.com"
                 onClick={async () => {
                   try {
-                    const res = await fetch("http://localhost:3001/api/fetch-inbound-emails");
+                    const res = await fetch(apiUrl("/api/fetch-inbound-emails"));
                     const data = await res.json();
                     if (data.success && data.emails && data.emails.length > 0) {
                       setCustomerEmails((prev) => {
@@ -1396,7 +1403,7 @@ export default function UnifiedInbox() {
                       // Save ALL current email UIDs so polling won't re-add them
                       const allUids = customerEmails.map((e) => e.uid).filter(Boolean);
                       // Also try to get IMAP UIDs and merge
-                      fetch("http://localhost:3001/api/fetch-inbound-emails")
+                      fetch(apiUrl("/api/fetch-inbound-emails"))
                         .then((r) => r.json())
                         .then((data) => {
                           const imapUids = (data?.emails || []).map((e) => e.uid).filter(Boolean);
@@ -2482,7 +2489,7 @@ export default function UnifiedInbox() {
                         setIsSendingSms(true);
                         setSmsSendStatus("Dispatching live email via mail bridge...");
                         try {
-                          const res = await fetch("http://localhost:3001/api/send-email", {
+                          const res = await fetch(apiUrl("/api/send-email"), {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({

@@ -15,6 +15,25 @@
   NPM_FLAGS = "--include=dev"
 
 # ------------------------------------------------------------
+# Mail / SMS backend. The same Express app that `npm run mail` starts
+# locally (mail-service.cjs) runs here as one Netlify Function, so the
+# browser calls /api/send-email, /api/send-sms and
+# /api/fetch-inbound-emails on the same origin — nothing has to run on
+# anyone's computer. Optional env vars: GMAIL_USER, GMAIL_PASS.
+# ------------------------------------------------------------
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["express", "cors", "nodemailer", "imap-simple", "mailparser", "serverless-http"]
+
+# Must come BEFORE the SPA catch-all below.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# ------------------------------------------------------------
 # SPA fallback. React Router owns /customers, /voice-ai and the
 # rest; without this, a hard refresh or a shared deep link would
 # 404 because no such file exists on disk.

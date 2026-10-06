@@ -1,4 +1,5 @@
 // Client-side API helpers for Twilio SMS and GoHighLevel (GHL) Integrations
+import { apiUrl } from "./api.js";
 
 export const TWILIO_STORAGE_KEY = "iwk_twilio_config";
 export const GHL_STORAGE_KEY = "iwk_ghl_config";
@@ -62,7 +63,7 @@ export async function sendTwilioSms({ to, body }) {
 
   // 1. Try sending through local mail bridge / SMS proxy (Port 3001)
   try {
-    const proxyRes = await fetch("http://localhost:3001/api/send-sms", {
+    const proxyRes = await fetch(apiUrl("/api/send-sms"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
