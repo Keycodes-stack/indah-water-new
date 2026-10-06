@@ -46,7 +46,7 @@ export default function Login() {
           style={{ fontSize: 12.5, display: "flex", alignItems: "center", gap: 6 }}
           title={`Switch To ${currentTheme === "dark" ? "White Theme" : "Dark Theme"}`}
         >
-          {currentTheme === "dark" ? "☀️ White Theme" : "🌙 Dark Theme"}
+          {currentTheme === "dark" ? "White Theme" : "Dark Theme"}
         </button>
       </div>
       <form className="login-card" onSubmit={onSubmit}>
@@ -103,7 +103,7 @@ export default function Login() {
                 setError("");
               }}
             >
-              <span style={{ fontWeight: 600, color: "var(--text)" }}>👑 Admin</span>
+              <span style={{ fontWeight: 600, color: "var(--text)" }}>Admin</span>
               <span style={{ fontSize: 10.5, color: "var(--text-dim)" }}>admin / Hello@123</span>
             </button>
             <button
@@ -116,7 +116,7 @@ export default function Login() {
                 setError("");
               }}
             >
-              <span style={{ fontWeight: 600, color: "var(--text)" }}>🎧 Supervisor</span>
+              <span style={{ fontWeight: 600, color: "var(--text)" }}>Supervisor</span>
               <span style={{ fontSize: 10.5, color: "var(--text-dim)" }}>supervisor / Hello@123</span>
             </button>
           </div>
