@@ -179,7 +179,7 @@ function AudioStreamModal({ call, onClose }) {
 
   return (
     <Modal
-      title={`🎧 Call Listen — ${call.customer || "Active Call"} (${(call.id || "").substring(0, 8)})`}
+      title={`Call Listen — ${call.customer || "Active Call"} (${(call.id || "").substring(0, 8)})`}
       onClose={onClose}
       footer={
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
@@ -284,7 +284,7 @@ function AudioStreamModal({ call, onClose }) {
                 gap: 8,
               }}
             >
-              {loading ? "⏳ Connecting..." : playing ? "⏸ Pause Stream" : "▶ Start Listening"}
+              {loading ? "Connecting..." : playing ? "Pause Stream" : "Start Listening"}
             </button>
 
             <button
@@ -293,7 +293,7 @@ function AudioStreamModal({ call, onClose }) {
               onClick={toggleMute}
               style={{ padding: "6px 12px", fontSize: 12, borderRadius: 8 }}
             >
-              {muted ? "🔇 Unmute" : "🔊 Mute"}
+              {muted ? "Unmute" : "Mute"}
             </button>
 
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-dim)" }}>
@@ -452,10 +452,10 @@ export default function CallListen() {
         method: "POST",
         headers: { Authorization: `Bearer ${VAPI_SECRET_KEY}` },
       }).catch(() => {});
-      showToast("✅ Live Call Terminated Successfully!");
+      showToast("Live Call Terminated Successfully!");
       loadData();
     } catch (err) {
-      showToast("✅ Call termination request processed.");
+      showToast("Call termination request processed.");
     }
   };
 
@@ -466,7 +466,7 @@ export default function CallListen() {
 
   const handleSendWhisper = () => {
     if (!whisperText.trim()) return;
-    showToast(`🗣️ Supervisor Whisper sent to AI Agent: "${whisperText}"`);
+    showToast(`Supervisor Whisper sent to AI Agent: "${whisperText}"`);
     setWhisperCall(null);
     setWhisperText("");
   };
@@ -500,7 +500,7 @@ export default function CallListen() {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Call Listen</h1>
             <Badge tone="critical" style={{ fontSize: 11, fontWeight: 800, padding: "4px 10px" }}>
-              🔴 REALTIME VOICE ENGINE TELEMETRY ACTIVE
+              REALTIME VOICE ENGINE TELEMETRY ACTIVE
             </Badge>
           </div>
           <p style={{ color: "var(--text-dim)", fontSize: 13, marginTop: 4, margin: 0 }}>
@@ -606,8 +606,8 @@ export default function CallListen() {
             }}
           >
             <option value="ALL">All Statuses</option>
-            <option value="in-progress">🔴 Live In-Progress Only</option>
-            <option value="completed">🟢 Completed Calls</option>
+            <option value="in-progress">Live In-Progress Only</option>
+            <option value="completed">Completed Calls</option>
           </select>
         </div>
       </div>
@@ -623,7 +623,7 @@ export default function CallListen() {
 
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: "var(--text-dim)" }}>
-            ⏳ Connecting to live voice telemetry stream...
+            Connecting to live voice telemetry stream...
           </div>
         ) : activeCalls.length === 0 ? (
           <div
@@ -639,7 +639,7 @@ export default function CallListen() {
               gap: 12,
             }}
           >
-            <div style={{ fontSize: 28 }}>🎧</div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>AUDIO STREAM</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
               No live active calls in progress right now
             </div>
@@ -670,11 +670,11 @@ export default function CallListen() {
                       {call.customer || "Active Customer Call"}
                     </div>
                     <div style={{ fontSize: 12, color: "var(--text-dim)", marginTop: 2 }}>
-                      📞 {call.phoneNumber || "+6012-3456789"}
+                      {call.phoneNumber || "+6012-3456789"}
                     </div>
                   </div>
                   <Badge tone="critical" style={{ fontSize: 11, fontWeight: 800, padding: "4px 8px" }}>
-                    🔴 IN-PROGRESS
+                    IN-PROGRESS
                   </Badge>
                 </div>
 
@@ -746,7 +746,7 @@ export default function CallListen() {
                       gap: 6,
                     }}
                   >
-                    🎧 Listen Live
+                    Listen Live
                   </button>
 
                   <button
@@ -761,7 +761,7 @@ export default function CallListen() {
                       border: "1px solid var(--border-strong)",
                     }}
                   >
-                    🗣️ Whisper
+                    Whisper
                   </button>
 
                   <button
@@ -777,7 +777,7 @@ export default function CallListen() {
                       border: "1px solid rgba(239,68,68,0.3)",
                     }}
                   >
-                    ⏹ Stop Call
+                    Stop Call
                   </button>
                 </div>
               </div>
@@ -817,14 +817,14 @@ export default function CallListen() {
                         {(row.id || "").substring(0, 14)}
                       </div>
                       <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginTop: 3 }}>
-                        📅 {row.startedAt ? new Date(row.startedAt).toLocaleString() : "Recently"}
+                        {row.startedAt ? new Date(row.startedAt).toLocaleString() : "Recently"}
                       </div>
                     </td>
 
                     <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
                       <div style={{ fontWeight: 700, color: "var(--text)" }}>{row.customer || "Customer"}</div>
                       <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 2 }}>
-                        📞 {row.phoneNumber || "+6012-3456789"}
+                        {row.phoneNumber || "+6012-3456789"}
                       </div>
                     </td>
 
@@ -887,7 +887,7 @@ export default function CallListen() {
                           gap: 6,
                         }}
                       >
-                        🎧 Listen Audio
+                        Listen Audio
                       </button>
                     </td>
                   </tr>
@@ -906,7 +906,7 @@ export default function CallListen() {
       {/* Whisper Modal */}
       {whisperCall && (
         <Modal
-          title={`🗣️ Send Supervisor Whisper — ${whisperCall.customer || "Active Call"}`}
+          title={`Send Supervisor Whisper — ${whisperCall.customer || "Active Call"}`}
           onClose={() => setWhisperCall(null)}
           footer={
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
