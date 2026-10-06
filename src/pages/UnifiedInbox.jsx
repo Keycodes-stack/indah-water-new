@@ -265,12 +265,43 @@ function newThreadFromInbound(inbound) {
   };
 }
 
+/* When a thread we started (Compose / workflow) was created, in ms — or null for threads that began with a customer email. */
+function threadCreatedAt(thread) {
+  if (typeof thread.createdAt === "number") return thread.createdAt;
+  const m = /^CE-(?:OUTBOUND|WF)-(\d{12,})/.exec(String(thread.id || ""));
+  return m ? Number(m[1]) : null;
+}
+
+/* A customer email can only be a reply to a thread we started if it was SENT after that thread was created.
+   (Without this, every older email from the same address was pulled into the new thread.) */
+function isOlderThanThread(thread, inbound) {
+  const created = threadCreatedAt(thread);
+  if (!created || !inbound.receivedAt) return false;
+  const sent = new Date(inbound.receivedAt).getTime();
+  return !Number.isNaN(sent) && sent < created - 30000; // 30s tolerance for clock differences
+}
+
+/* The thread without one of its history entries (used to clean up older emails that were wrongly added). */
+function withoutHistoryEntry(thread, index) {
+  const history = thread.history.filter((_, i) => i !== index);
+  const last = history[history.length - 1];
+  return {
+    ...thread,
+    history,
+    ...(last ? { inboundSnippet: last.text, lastSnippet: last.text } : {}),
+    _stampedOnly: true,
+  };
+}
+
 function mergeInboundIntoThread(thread, inbound) {
   const history = thread.history || [];
   const when = emailTimeLabel(inbound.receivedAt, inbound.sentDate || "Just now");
+  const older = isOlderThanThread(thread, inbound);
 
   const known = history.findIndex((h) => h.uid != null && h.uid === inbound.uid);
   if (known !== -1) {
+    if (older) return withoutHistoryEntry(thread, known); // it never belonged to this thread
+
     // already shown; if it was saved with the server's UTC clock, correct its time to the viewer's local time
     if (inbound.receivedAt && history[known].time !== when) {
       return { ...thread, history: history.map((h, i) => (i === known ? { ...h, time: when } : h)), _stampedOnly: true };
@@ -283,6 +314,7 @@ function mergeInboundIntoThread(thread, inbound) {
     (h) => h.uid == null && String(h.sender || "").startsWith("Customer") && String(h.text || "").trim() === text
   );
   if (legacyIdx !== -1) {
+    if (older) return withoutHistoryEntry(thread, legacyIdx); // an older email that was wrongly attached earlier
     // already shown before uids existed — just remember its uid
     // also fixes the time of an old entry that was saved with the server's (UTC) clock
     return {
@@ -291,6 +323,8 @@ function mergeInboundIntoThread(thread, inbound) {
       _stampedOnly: true,
     };
   }
+
+  if (older) return null;
 
   const entry = { sender: `Customer (${inbound.senderEmail})`, text: inbound.inboundSnippet, time: when, uid: inbound.uid };
   return {
@@ -439,6 +473,7 @@ export default function UnifiedInbox() {
     const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const thread = {
       id: `CE-WF-${stamp}`,
+      createdAt: Date.now(),
       channel: "Customer Email",
       customerName: customer?.name || to.split("@")[0],
       senderEmail: to,
@@ -462,7 +497,7 @@ export default function UnifiedInbox() {
   useEffect(() => {
     let inFlight = false; // never stack IMAP calls (each one is a Gmail login)
     const fetchLatestReplies = async () => {
-      if (inFlight) return;
+      if (inFlight || document.hidden) return; // nothing to refresh while the tab is in the background
       inFlight = true;
       try {
         const res = await fetch(apiUrl("/api/fetch-inbound-emails"));
@@ -531,7 +566,7 @@ export default function UnifiedInbox() {
 
     fetchLatestReplies();
     // 8s against the local bridge as before; a deployed function does a full IMAP login per call, so go gentler.
-    const interval = setInterval(fetchLatestReplies, IS_LOCAL_API ? 8000 : 20000);
+    const interval = setInterval(fetchLatestReplies, IS_LOCAL_API ? 8000 : 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -964,6 +999,7 @@ export default function UnifiedInbox() {
     const createThreadAndClose = () => {
       const newThread = {
         id: `CE-OUTBOUND-${Date.now()}`,
+        createdAt: Date.now(),
         channel: "Customer Email",
         customerName: composeCustomerName.trim() || composeRecipient.split("@")[0],
         senderEmail: composeRecipient,
