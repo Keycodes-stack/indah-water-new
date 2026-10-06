@@ -23,12 +23,20 @@ const GMAIL_USER = process.env.GMAIL_USER || 'coutomerr@gmail.com';
 const GMAIL_PASS = process.env.GMAIL_PASS || 'wvofrlfpjwnmpbjn';
 
 // SMTP Transporter for Sending Real Emails
+// Twilio defaults used by /api/send-sms when the browser does not pass its own credentials.
+const TWILIO_DEFAULT_SID = 'AC4dd107dc736942e0474eb7e23e16e244';
+const TWILIO_DEFAULT_TOKEN = 'e3bd880d4fee76e35a08d9c1c01a22f7';
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: GMAIL_USER,
     pass: GMAIL_PASS,
   },
+  // Fail fast with a clear error rather than hanging (Netlify Functions stop at ~10s).
+  connectionTimeout: 8000,
+  greetingTimeout: 8000,
+  socketTimeout: 20000,
 });
 
 // Endpoint: Send Real Email from coutomerr@gmail.com
@@ -74,9 +82,10 @@ app.post('/api/send-email', async (req, res) => {
 app.post('/api/send-sms', async (req, res) => {
   try {
     const { to, body, accountSid, authToken, fromNumber } = req.body;
-    const sid = (accountSid || 'AC4dd107dc736942e0474eb7e23e16e244').trim();
-    const token = (authToken || 'e3bd880d4fee76e35a08d9c1c01a22f7').trim();
-    const from = (fromNumber || '+19854652238').trim();
+    // Env vars (set in Netlify) take priority, then what the browser sends, then the built-in default.
+    const sid = (process.env.TWILIO_ACCOUNT_SID || accountSid || TWILIO_DEFAULT_SID).trim();
+    const token = (process.env.TWILIO_AUTH_TOKEN || authToken || TWILIO_DEFAULT_TOKEN).trim();
+    const from = (process.env.TWILIO_FROM_NUMBER || fromNumber || '+19854652238').trim();
 
     if (!to || !body) {
       return res.status(400).json({ error: "Missing 'to' or 'body'" });
@@ -112,6 +121,47 @@ app.post('/api/send-sms', async (req, res) => {
   }
 });
 
+// Running as a Netlify Function (AWS Lambda) the whole request must finish within ~10s.
+const SERVERLESS = !!(process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY);
+const IMAP_DEADLINE_MS = SERVERLESS ? 8500 : 40000;
+const INBOX_CACHE_MS = 10000;
+
+// Endpoint: Health check — verifies SMTP login and the Twilio account WITHOUT sending anything.
+app.get('/api/health', async (req, res) => {
+  const out = { smtp: { ok: false }, twilio: { ok: false } };
+
+  const smtp = (async () => {
+    const t0 = Date.now();
+    try {
+      await transporter.verify();
+      out.smtp = { ok: true, ms: Date.now() - t0 };
+    } catch (e) {
+      out.smtp = { ok: false, error: e.message };
+    }
+  })();
+
+  const twilio = (async () => {
+    try {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 6000);
+      const sid = process.env.TWILIO_ACCOUNT_SID || TWILIO_DEFAULT_SID;
+      const token = process.env.TWILIO_AUTH_TOKEN || TWILIO_DEFAULT_TOKEN;
+      const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}.json`, {
+        headers: { Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64') },
+        signal: ctl.signal,
+      });
+      clearTimeout(timer);
+      const d = await r.json().catch(() => ({}));
+      out.twilio = r.ok ? { ok: true, accountStatus: d.status } : { ok: false, error: d.message || `HTTP ${r.status}` };
+    } catch (e) {
+      out.twilio = { ok: false, error: e.message };
+    }
+  })();
+
+  await Promise.all([smtp, twilio]);
+  return res.json({ ok: out.smtp.ok && out.twilio.ok, ...out, mode: process.env.AWS_LAMBDA_FUNCTION_NAME ? 'netlify-function' : 'local' });
+});
+
 // ─── IMAP Config with longer timeouts ──────────────────────────────────────
 const IMAP_CONFIG = {
   imap: {
@@ -121,16 +171,16 @@ const IMAP_CONFIG = {
     port: 993,
     tls: true,
     tlsOptions: { rejectUnauthorized: false },
-    authTimeout: 15000,
-    connTimeout: 20000,
+    authTimeout: SERVERLESS ? 6000 : 15000,
+    connTimeout: SERVERLESS ? 6000 : 20000,
   },
 };
 
-// Endpoint: Fetch Real Inbound Emails sent to coutomerr@gmail.com
-app.get('/api/fetch-inbound-emails', async (req, res) => {
-  let connection = null;
-  try {
-    connection = await imaps.connect(IMAP_CONFIG);
+// Reads the newest inbound customer emails. `holder.connection` lets the caller close the
+// IMAP connection if the deadline passes first.
+async function readInbox(holder) {
+    const connection = await imaps.connect(IMAP_CONFIG);
+    holder.connection = connection;
     await connection.openBox('INBOX');
 
     const searchCriteria = ['ALL'];
@@ -139,11 +189,20 @@ app.get('/api/fetch-inbound-emails', async (req, res) => {
       markSeen: false,
     };
 
-    const messages = await connection.search(searchCriteria, fetchOptions);
+    // Two steps so a big mailbox stays fast: first list only the UIDs (no message bodies),
+    // then download the bodies of just the 10 newest. (Downloading every message in the
+    // inbox and keeping 10 took minutes and timed out on Netlify.)
+    const index = await connection.search(searchCriteria, { bodies: [], markSeen: false });
+    const newestUids = index
+      .map((m) => m.attributes.uid)
+      .sort((a, b) => b - a)
+      .slice(0, 10);
 
-    // Sort newest first, take top 10
-    messages.sort((a, b) => b.attributes.uid - a.attributes.uid);
-    const recent = messages.slice(0, 10);
+    let recent = [];
+    if (newestUids.length > 0) {
+      recent = await connection.search([['UID', newestUids.join(',')]], fetchOptions);
+      recent.sort((a, b) => b.attributes.uid - a.attributes.uid);
+    }
 
     const parsedEmails = [];
 
@@ -215,17 +274,42 @@ app.get('/api/fetch-inbound-emails', async (req, res) => {
       }
     }
 
-    try { connection.end(); } catch (_) {}
-    return res.json({ success: true, emails: parsedEmails });
+    return parsedEmails;
+}
 
-  } catch (err) {
-    console.error('[IMAP ERROR]', err.message);
-    if (connection) {
-      try { connection.end(); } catch (_) {}
-    }
-    // Return empty success so the frontend polling doesn't show errors
-    return res.json({ success: true, emails: [], imap_error: err.message });
+// One IMAP login at a time (shared by every browser tab polling), a short cache, and a hard
+// deadline — a slow Gmail answers with an empty list instead of hanging the page or the function.
+let inboxInFlight = null;
+let inboxCache = { at: 0, emails: [] };
+
+// Endpoint: Fetch Real Inbound Emails sent to coutomerr@gmail.com
+app.get('/api/fetch-inbound-emails', async (req, res) => {
+  if (Date.now() - inboxCache.at < INBOX_CACHE_MS) {
+    return res.json({ success: true, emails: inboxCache.emails, cached: true });
   }
+  if (!inboxInFlight) {
+    const holder = {};
+    inboxInFlight = (async () => {
+      let timer;
+      try {
+        const deadline = new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error(`IMAP did not answer within ${IMAP_DEADLINE_MS / 1000}s`)), IMAP_DEADLINE_MS);
+        });
+        const emails = await Promise.race([readInbox(holder), deadline]);
+        inboxCache = { at: Date.now(), emails };
+        return { success: true, emails };
+      } catch (err) {
+        console.error('[IMAP ERROR]', err.message);
+        // Return empty success so the frontend polling doesn't show errors
+        return { success: true, emails: [], imap_error: err.message };
+      } finally {
+        clearTimeout(timer);
+        try { holder.connection && holder.connection.end(); } catch (_) {}
+        inboxInFlight = null;
+      }
+    })();
+  }
+  return res.json(await inboxInFlight);
 });
 
 // `npm run mail` runs this file directly and starts the bridge on port 3001.

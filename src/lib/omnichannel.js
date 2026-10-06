@@ -61,7 +61,8 @@ export async function sendTwilioSms({ to, body }) {
 
   const cleanTo = to.replace(/\s+/g, "").replace(/-/g, "");
 
-  // 1. Try sending through local mail bridge / SMS proxy (Port 3001)
+  // 1. Try sending through the mail bridge / SMS proxy (localhost:3001 locally, /api on Netlify)
+  let proxyFailure = null;
   try {
     const proxyRes = await fetch(apiUrl("/api/send-sms"), {
       method: "POST",
@@ -80,9 +81,13 @@ export async function sendTwilioSms({ to, body }) {
       console.log("SMS sent via backend proxy:", proxyData);
       return proxyData;
     }
+    // The bridge answered with a real error (e.g. Twilio rejected the credentials): surface it
+    // instead of falling through to the simulated "delivered" result below.
+    proxyFailure = proxyData?.error || `SMS bridge error ${proxyRes.status}`;
   } catch (proxyErr) {
     console.warn("SMS proxy unavailable, attempting direct dispatch:", proxyErr);
   }
+  if (proxyFailure) throw new Error(proxyFailure);
 
   // 2. Direct browser fallback
   const url = `https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`;
