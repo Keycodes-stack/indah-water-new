@@ -183,6 +183,28 @@ const IMAP_CONFIG = {
   },
 };
 
+// Fetches the newest `count` messages (full RFC822 source, nothing is marked as read).
+function fetchNewest(imap, total, count) {
+  return new Promise((resolve, reject) => {
+    if (!total) return resolve([]);
+    const from = Math.max(1, total - count + 1);
+    const items = [];
+    const f = imap.seq.fetch(`${from}:${total}`, { bodies: [''], markSeen: false });
+    f.on('message', (msg) => {
+      const item = { attributes: {}, parts: [] };
+      msg.on('body', (stream, info) => {
+        const chunks = [];
+        stream.on('data', (c) => chunks.push(c));
+        stream.once('end', () => item.parts.push({ which: info.which, body: Buffer.concat(chunks) }));
+      });
+      msg.once('attributes', (attrs) => { item.attributes = attrs; });
+      msg.once('end', () => items.push(item));
+    });
+    f.once('error', reject);
+    f.once('end', () => resolve(items));
+  });
+}
+
 // Reads the newest inbound customer emails. `holder.connection` lets the caller close the
 // IMAP connection if the deadline passes first.
 async function readInbox(holder, cfg = IMAP_CONFIG) {
@@ -190,28 +212,12 @@ async function readInbox(holder, cfg = IMAP_CONFIG) {
     holder.pending = pending; // lets the caller close it even if the deadline passes mid-connect
     const connection = await pending;
     holder.connection = connection;
-    await connection.openBox('INBOX');
+    const box = await connection.openBox('INBOX');
 
-    const searchCriteria = ['ALL'];
-    const fetchOptions = {
-      bodies: ['HEADER', 'TEXT', ''],
-      markSeen: false,
-    };
-
-    // Two steps so a big mailbox stays fast: first list only the UIDs (no message bodies),
-    // then download the bodies of just the 10 newest. (Downloading every message in the
-    // inbox and keeping 10 took minutes and timed out on Netlify.)
-    const index = await connection.search(searchCriteria, { bodies: [], markSeen: false });
-    const newestUids = index
-      .map((m) => m.attributes.uid)
-      .sort((a, b) => b - a)
-      .slice(0, 10);
-
-    let recent = [];
-    if (newestUids.length > 0) {
-      recent = await connection.search([['UID', newestUids.join(',')]], fetchOptions);
-      recent.sort((a, b) => b.attributes.uid - a.attributes.uid);
-    }
+    // One round trip: fetch the newest 10 messages by sequence number. (Gmail's IMAP can take ~20s per
+    // command, so a separate SEARCH step is avoided; a UID list also silently dropped messages.)
+    const recent = await fetchNewest(connection.imap, box.messages.total, 10);
+    recent.sort((a, b) => b.attributes.uid - a.attributes.uid);
 
     const parsedEmails = [];
 
