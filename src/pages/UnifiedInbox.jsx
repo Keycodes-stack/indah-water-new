@@ -716,7 +716,7 @@ export default function UnifiedInbox() {
         >
           {sequencerNotification && (
             <div style={{ padding: "10px 14px", background: "var(--good-soft)", color: "var(--good)", borderRadius: 8, fontSize: 13, marginBottom: 14 }}>
-              ✓ {sequencerNotification}
+              {sequencerNotification}
             </div>
           )}
 
@@ -941,11 +941,11 @@ export default function UnifiedInbox() {
                       <td>
                         {msg.isAiPaused ? (
                           <span className="badge bad" style={{ fontSize: 11 }}>
-                            🔴 Human Takeover
+                            Human Takeover
                           </span>
                         ) : (
                           <span className="badge ok" style={{ fontSize: 11 }}>
-                            🟢 AI Auto-Pilot
+                            AI Auto-Pilot
                           </span>
                         )}
                       </td>
@@ -1182,7 +1182,7 @@ export default function UnifiedInbox() {
                       style={{ fontSize: 12, padding: "5px 10px", color: "var(--warning)", borderColor: "var(--warning)" }}
                       onClick={() => toggleAiPause(activeMessage.id)}
                     >
-                      ⏸ Pause AI (Take Over)
+                      Pause AI (Take Over)
                     </button>
                   )}
                 </div>
@@ -1205,8 +1205,8 @@ export default function UnifiedInbox() {
               >
                 <span>
                   {activeMessage.isAiPaused
-                    ? "🔴 AI Paused — Human Representative in Control (Manual replies enabled)"
-                    : "🟢 AI Auto-Pilot Active — Conversational agent responding automatically"}
+                    ? "AI Paused — Human Representative in Control (Manual replies enabled)"
+                    : "AI Auto-Pilot Active — Conversational agent responding automatically"}
                 </span>
                 {!activeMessage.isAiPaused && (
                   <button
@@ -1215,7 +1215,7 @@ export default function UnifiedInbox() {
                     onClick={handleTriggerAiReply}
                     disabled={isAiTyping}
                   >
-                    Simulate AI Reply Now ⚡
+                    Simulate AI Reply Now
                   </button>
                 )}
               </div>
@@ -1260,7 +1260,7 @@ export default function UnifiedInbox() {
                           }}
                         >
                           <span style={{ fontSize: 18 }}>
-                            {msg.attachment.type === "qrcode" ? "📱" : msg.attachment.type === "receipt" ? "🧾" : "📄"}
+                            {msg.attachment.type === "qrcode" ? "QR" : msg.attachment.type === "receipt" ? "Receipt" : "Document"}
                           </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 600, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1349,7 +1349,7 @@ export default function UnifiedInbox() {
                   fontSize: 12,
                 }}
               >
-                <span>📎 <strong>{selectedAttachment.name}</strong> ({selectedAttachment.size})</span>
+                <span><strong>{selectedAttachment.name}</strong> ({selectedAttachment.size})</span>
                 <button
                   type="button"
                   style={{ background: "none", border: "none", cursor: "pointer", color: "var(--bad)", fontWeight: "bold" }}
@@ -1371,7 +1371,7 @@ export default function UnifiedInbox() {
                   onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
                   title="Attach file or bill document"
                 >
-                  📎
+                  Attach
                 </button>
 
                 {/* Attachment Options Dropdown */}
