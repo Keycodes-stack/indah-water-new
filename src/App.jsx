@@ -22,6 +22,7 @@ import ReviewPanel from "./pages/ReviewPanel.jsx";
 import EscalatePanel from "./pages/EscalatePanel.jsx";
 import Workflows from "./pages/Workflows.jsx";
 import CallListen from "./pages/CallListen.jsx";
+import CustomerAccount from "./pages/CustomerAccount.jsx";
 
 function RequireAuth({ children }) {
   const location = useLocation();
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="/call-listen" element={<CallListen />} />
             <Route path="/call/join" element={<CallJoin />} />
             <Route path="/call-alerts" element={<CallAlerts />} />
+            <Route path="/customer-account" element={<CustomerAccount />} />
             <Route path="/follow-ups" element={<FollowUps />} />
             <Route path="/testing" element={<Testing />} />
             <Route path="/fields-insights" element={<FieldsStructure />} />
