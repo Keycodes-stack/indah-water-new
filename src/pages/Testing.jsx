@@ -14,10 +14,12 @@ const AGENTS = [
     assistantId: CONFIG.vapi.assistantId,
     color: "#10b981", // Emerald Green
     description: "Courteous Careline tone, bilingual English & Malay mix.",
-    voices: CONFIG.vapi.voices?.manglish || [
-      { id: "2LyhoWYWTvmqt5r3iFg4", label: "Manglish 1", provider: "11labs", model: "eleven_v3" },
-      { id: "D1360BR3zCp9v0EXUpO4", label: "Manglish 2", provider: "11labs", model: "eleven_v3" },
-    ],
+    voice: CONFIG.vapi.voices?.manglish || {
+      id: "D1360BR3zCp9v0EXUpO4",
+      label: "Manglish",
+      provider: "11labs",
+      model: "eleven_v3",
+    },
   },
   {
     id: "aina-my",
@@ -41,7 +43,6 @@ export default function Testing() {
 
   const [activeAgentId, setActiveAgentId] = useState(null);
   const [selectedVoiceIds, setSelectedVoiceIds] = useState({
-    "aina-en": "2LyhoWYWTvmqt5r3iFg4",
     "aina-my": "w2dXNwje6o73fWGIO6CD",
   });
   const [customVoiceInputs, setCustomVoiceInputs] = useState({});
@@ -139,19 +140,28 @@ export default function Testing() {
         if (timerRef.current) clearInterval(timerRef.current);
       });
 
-      // Prepare assistant voice override if selected
-      const chosenVoiceId = selectedVoiceIds[agent.id] || customVoiceInputs[agent.id];
-      const chosenVoiceObj = agent.voices?.find((v) => v.id === chosenVoiceId);
-
+      // Prepare assistant voice override if selected / configured
       let assistantOverrides = undefined;
-      if (chosenVoiceId) {
+      if (agent.voice) {
         assistantOverrides = {
           voice: {
-            provider: chosenVoiceObj?.provider || "11labs",
-            voiceId: chosenVoiceId,
-            model: chosenVoiceObj?.model || "eleven_turbo_v2_5",
+            provider: agent.voice.provider || "11labs",
+            voiceId: agent.voice.id,
+            model: agent.voice.model || "eleven_v3",
           },
         };
+      } else if (agent.voices && agent.voices.length > 0) {
+        const chosenVoiceId = selectedVoiceIds[agent.id] || agent.voices[0]?.id;
+        const chosenVoiceObj = agent.voices.find((v) => v.id === chosenVoiceId) || agent.voices[0];
+        if (chosenVoiceObj) {
+          assistantOverrides = {
+            voice: {
+              provider: chosenVoiceObj.provider || "11labs",
+              voiceId: chosenVoiceObj.id,
+              model: chosenVoiceObj.model || "eleven_multilingual_v2",
+            },
+          };
+        }
       }
 
       vapi.start(agent.assistantId || CONFIG.vapi.assistantId, assistantOverrides).catch((err) => {
