@@ -92,7 +92,7 @@ function AudioModal({ alertRow, onClose }) {
 
   return (
     <Modal
-      title={`🎧 Live Audio Stream — Call ID: ${alertRow?.Call_id || alertRow?.row_number || "Alert"}`}
+      title={`Live Audio Stream — Call ID: ${alertRow?.Call_id || alertRow?.row_number || "Alert"}`}
       onClose={onClose}
       footer={
         <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
@@ -108,7 +108,7 @@ function AudioModal({ alertRow, onClose }) {
         </div>
         <div style={{ background: "var(--surface-2)", padding: 16, borderRadius: 10, border: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: playing ? "#10b981" : "var(--text-dim)" }}>
-            {loadingAudio ? "⏳ Connecting audio stream..." : playing ? "● PLAYING AUDIO STREAM" : "STREAM PAUSED / READY"}
+            {loadingAudio ? "Connecting audio stream..." : playing ? "● PLAYING AUDIO STREAM" : "STREAM PAUSED / READY"}
           </div>
 
           <audio
@@ -391,10 +391,10 @@ export default function CallAlerts() {
             <div className="ring-avatar" aria-hidden="true">
               <span className="ring-wave" />
               <span className="ring-wave d2" />
-              ☎
+              
             </div>
 
-            <div className="ring-label">🔴 INCOMING LIVE CALL ALERT (&lt; 40s)</div>
+            <div className="ring-label">INCOMING LIVE CALL ALERT (&lt; 40s)</div>
             <h3 className="ring-title">{incoming.Reason || "Call Flagged For Immediate Supervisor Attention"}</h3>
 
             {incomingTicket && (
@@ -447,7 +447,7 @@ export default function CallAlerts() {
                 }}
                 onClick={() => handleTakeOver(incoming)}
               >
-                ⚡ Take Over (Redirect to Testing)
+                Take Over (Redirect to Testing)
               </button>
 
               <div style={{ display: "flex", gap: 10, width: "100%" }}>
@@ -466,7 +466,7 @@ export default function CallAlerts() {
                   }}
                   onClick={() => handleListen(incoming)}
                 >
-                  🎧 Listen
+                  Listen
                 </button>
 
                 <button
@@ -482,7 +482,7 @@ export default function CallAlerts() {
                   }}
                   onClick={() => handleReject(incoming)}
                 >
-                  🚫 Reject / Cancel
+                  Reject / Cancel
                 </button>
               </div>
             </div>
@@ -565,7 +565,7 @@ export default function CallAlerts() {
               }}
               title="Filter view by assigned supervisor"
             >
-              <option value="all">👑 All Supervisors (Admin)</option>
+              <option value="all">All Supervisors (Admin)</option>
               {supervisorsList.map((s) => (
                 <option key={s.username} value={s.username}>
                   @{s.username} ({s.name})
@@ -677,7 +677,7 @@ export default function CallAlerts() {
                         onClick={() => handleTakeOver(r)}
                         title="Take over call - Redirect to Testing"
                       >
-                        ⚡ Take Over
+                        Take Over
                       </button>
                       <button
                         className="btn-ghost"
@@ -685,7 +685,7 @@ export default function CallAlerts() {
                         onClick={() => handleListen(r)}
                         title="Listen to call audio recording"
                       >
-                        🎧 Listen
+                        Listen
                       </button>
                     </div>
                   </td>
