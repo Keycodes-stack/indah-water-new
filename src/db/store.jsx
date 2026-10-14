@@ -67,6 +67,40 @@ export function DataProvider({ children }) {
     [nextAccountId]
   );
 
+  const importCustomers = useCallback(
+    (newRecords, mode = "append") => {
+      if (!Array.isArray(newRecords) || !newRecords.length) return;
+      setCustomers((prev) => {
+        if (mode === "replace") {
+          return newRecords;
+        }
+
+        const incomingMap = new Map();
+        newRecords.forEach((r) => {
+          if (r.accountNo) incomingMap.set(r.accountNo, r);
+          if (r.id) incomingMap.set(r.id, r);
+        });
+
+        const updatedExisting = prev.map((c) => {
+          const match = incomingMap.get(c.accountNo) || incomingMap.get(c.id);
+          return match ? { ...c, ...match } : c;
+        });
+
+        const existingKeys = new Set([
+          ...prev.map((c) => c.accountNo).filter(Boolean),
+          ...prev.map((c) => c.id).filter(Boolean),
+        ]);
+
+        const genuinelyNew = newRecords.filter(
+          (r) => !existingKeys.has(r.accountNo) && !existingKeys.has(r.id)
+        );
+
+        return [...genuinelyNew, ...updatedExisting];
+      });
+    },
+    []
+  );
+
   const updateCustomer = useCallback((id, patch) => {
     setCustomers((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...patch } : c))
@@ -97,6 +131,7 @@ export function DataProvider({ children }) {
       settings,
       ...staticData,
       addCustomer,
+      importCustomers,
       updateCustomer,
       deleteCustomer,
       updateSettings,
@@ -105,8 +140,8 @@ export function DataProvider({ children }) {
       seedCount: customersSeed.length,
     }),
     [
-      customers, settings, staticData, addCustomer, updateCustomer,
-      deleteCustomer, updateSettings, resetAll, dirty,
+      customers, settings, staticData, addCustomer, importCustomers,
+      updateCustomer, deleteCustomer, updateSettings, resetAll, dirty,
     ]
   );
 
