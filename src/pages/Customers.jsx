@@ -7,7 +7,7 @@
    visibly moves the arrears totals, stage counts and area rankings.
    ============================================================ */
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { useData } from "../db/store.jsx";
@@ -16,6 +16,7 @@ import {
 } from "../db/selectors.js";
 import { rm, rmCompact, num, fmtDate, downloadCsv, ageingBucket } from "../lib/format.js";
 import { Stats, Panel, Badge, Modal, Field, EmptyState } from "../components/ui.jsx";
+import { parseCustomerCsv, generateSampleCsv } from "../lib/csvHelper.js";
 
 const BLANK = {
   name: "", accountNo: "", category: "Domestic", area: "", state: "",
@@ -37,7 +38,7 @@ function stageTone(stage) {
 }
 
 export default function Customers() {
-  const { customers, areas, addCustomer, updateCustomer, deleteCustomer } = useData();
+  const { customers, areas, addCustomer, importCustomers, updateCustomer, deleteCustomer } = useData();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const paramCategory = searchParams.get("category") || "";
@@ -54,6 +55,8 @@ export default function Customers() {
   const [routing, setRouting] = useState(paramRouting);
   const [sort, setSort] = useState({ key: "arrearsAmount", dir: "desc" });
   const [page, setPage] = useState(0);
+
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     if (paramCategory) setCategory(paramCategory);
@@ -130,6 +133,16 @@ export default function Customers() {
         c.contactable ? "Yes" : "No",
       ])
     );
+  }
+
+  function downloadSample() {
+    const csvStr = generateSampleCsv();
+    const blob = new Blob([csvStr], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "sample-water-customers.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   return (
@@ -219,7 +232,17 @@ export default function Customers() {
         </div>
         <div className="fx">
           <label>&nbsp;</label>
+          <button className="btn-ghost" onClick={downloadSample} title="Download sample CSV template">Sample CSV</button>
+        </div>
+        <div className="fx">
+          <label>&nbsp;</label>
           <button className="btn-ghost" onClick={exportCsv}>Export CSV</button>
+        </div>
+        <div className="fx">
+          <label>&nbsp;</label>
+          <button className="btn-solid" style={{ background: "#0b7fc4" }} onClick={() => setShowImport(true)}>
+            Import CSV
+          </button>
         </div>
         <div className="fx">
           <label>&nbsp;</label>
@@ -328,6 +351,19 @@ export default function Customers() {
           areas={areas}
           onCancel={() => setEditing(null)}
           onSave={save}
+        />
+      )}
+
+      {showImport && (
+        <ImportCsvModal
+          existingCustomers={customers}
+          onClose={() => setShowImport(false)}
+          onImport={(records, mode) => {
+            if (importCustomers) importCustomers(records, mode);
+            setShowImport(false);
+            setPage(0);
+          }}
+          onDownloadSample={downloadSample}
         />
       )}
 
@@ -464,6 +500,254 @@ function CustomerForm({ draft, areas, onCancel, onSave }) {
         Arrears value and stage feed the book position, segment and geography pages
         directly — saving here changes those numbers straight away.
       </p>
+    </Modal>
+  );
+}
+
+/* ---------------- CSV Import Modal ---------------- */
+
+function ImportCsvModal({ existingCustomers, onClose, onImport, onDownloadSample }) {
+  const [file, setFile] = useState(null);
+  const [parsed, setParsed] = useState(null);
+  const [mode, setMode] = useState("append");
+  const [error, setError] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+
+  function processFile(selectedFile) {
+    if (!selectedFile) return;
+    if (!selectedFile.name.toLowerCase().endsWith(".csv")) {
+      setError("Please select a valid .csv file.");
+      return;
+    }
+    setError(null);
+    setFile(selectedFile);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const res = parseCustomerCsv(text, existingCustomers);
+      if (!res.success) {
+        setError(res.error || "Failed to parse CSV file.");
+        setParsed(null);
+      } else {
+        setParsed(res);
+      }
+    };
+    reader.onerror = () => {
+      setError("Error reading file.");
+    };
+    reader.readAsText(selectedFile);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  }
+
+  return (
+    <Modal
+      title="Import Customers (CSV)"
+      onClose={onClose}
+      wide
+      footer={
+        <>
+          <button className="btn-ghost" onClick={onClose}>Cancel</button>
+          <button
+            className="btn-solid"
+            disabled={!parsed || !parsed.records.length}
+            style={{ background: "#0b7fc4", color: "#fff" }}
+            onClick={() => onImport(parsed.records, mode)}
+          >
+            Confirm &amp; Import ({parsed?.summary?.validRecords || 0} Accounts)
+          </button>
+        </>
+      }
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {!parsed ? (
+          <div
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              border: `2px dashed ${isDragging ? "#0b7fc4" : "var(--border-strong)"}`,
+              background: isDragging ? "rgba(11, 127, 196, 0.08)" : "var(--surface-2)",
+              borderRadius: 12,
+              padding: "36px 20px",
+              textAlign: "center",
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".csv"
+              style={{ display: "none" }}
+              onChange={(e) => processFile(e.target.files[0])}
+            />
+            <div style={{ fontSize: 32, marginBottom: 8 }}>📥</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>
+              Drag &amp; drop your Customer CSV file here, or click to browse
+            </div>
+            <div style={{ fontSize: 12, color: "var(--text-dim)", marginTop: 6 }}>
+              Supports standard utility columns: Account No, Name, Category, Area, State, Arrears, etc.
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={(e) => { e.stopPropagation(); onDownloadSample(); }}
+                style={{ fontSize: 12, fontWeight: 700 }}
+              >
+                Download Sample CSV Template
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "10px 14px",
+                background: "var(--surface-2)",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div>
+                <strong style={{ fontSize: 13.5 }}>{file.name}</strong>
+                <div style={{ fontSize: 11, color: "var(--text-dim)" }}>
+                  {(file.size / 1024).toFixed(1)} KB • {parsed.summary.totalRows} rows parsed
+                </div>
+              </div>
+              <button
+                className="btn-ghost"
+                style={{ fontSize: 11.5, padding: "4px 8px" }}
+                onClick={() => { setFile(null); setParsed(null); setError(null); }}
+              >
+                Change File
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+                gap: 10,
+                marginTop: 12,
+              }}
+            >
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: 11, color: "var(--text-dim)", textTransform: "uppercase", fontWeight: 700 }}>
+                  Valid Accounts
+                </div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#10b981", marginTop: 2 }}>
+                  {num(parsed.summary.validRecords)}
+                </div>
+                <div style={{ fontSize: 10.5, color: "var(--text-faint)", marginTop: 2 }}>
+                  {parsed.summary.newAccounts} new / {parsed.summary.updatedAccounts} updates
+                </div>
+              </div>
+
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: 11, color: "var(--text-dim)", textTransform: "uppercase", fontWeight: 700 }}>
+                  Total Arrears (RM)
+                </div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)", marginTop: 2 }}>
+                  {rmCompact(parsed.summary.totalArrears)}
+                </div>
+                <div style={{ fontSize: 10.5, color: "var(--text-faint)", marginTop: 2 }}>
+                  {rm(parsed.summary.totalArrears)}
+                </div>
+              </div>
+
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", padding: 12, borderRadius: 8 }}>
+                <div style={{ fontSize: 11, color: "var(--text-dim)", textTransform: "uppercase", fontWeight: 700 }}>
+                  Categories
+                </div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, marginTop: 4 }}>
+                  Dom: {parsed.summary.categoryCounts.Domestic || 0} • Com: {parsed.summary.categoryCounts.Commercial || 0} • Ind: {parsed.summary.categoryCounts.Industrial || 0}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 14, padding: "12px 14px", background: "var(--surface-2)", borderRadius: 8, border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>Import Mode:</div>
+              <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="importMode"
+                    value="append"
+                    checked={mode === "append"}
+                    onChange={() => setMode("append")}
+                  />
+                  <span>
+                    <strong>Append &amp; Update (Recommended)</strong> — Updates existing accounts by account number; adds new accounts.
+                  </span>
+                </label>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="importMode"
+                    value="replace"
+                    checked={mode === "replace"}
+                    onChange={() => setMode("replace")}
+                  />
+                  <span>
+                    <strong>Replace All</strong> — Overwrites current list with this CSV file.
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                Preview (First 5 of {parsed.summary.validRecords} records):
+              </div>
+              <div className="table-wrap" style={{ maxHeight: 180, overflowY: "auto" }}>
+                <table style={{ fontSize: 11.5 }}>
+                  <thead>
+                    <tr>
+                      <th>Account No</th>
+                      <th>Name</th>
+                      <th>Category</th>
+                      <th>Area</th>
+                      <th className="num">Arrears</th>
+                      <th>Stage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {parsed.records.slice(0, 5).map((r, i) => (
+                      <tr key={i}>
+                        <td className="mono">{r.accountNo}</td>
+                        <td><strong>{r.name}</strong></td>
+                        <td>{r.category}</td>
+                        <td>{r.area}, {r.state}</td>
+                        <td className="num"><strong>{rm(r.arrearsAmount)}</strong></td>
+                        <td><Badge tone={stageTone(r.stage)}>{r.stage}</Badge></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div style={{ color: "var(--critical)", fontSize: 12.5, padding: "8px 12px", background: "rgba(239, 68, 68, 0.1)", borderRadius: 6 }}>
+            ⚠ {error}
+          </div>
+        )}
+      </div>
     </Modal>
   );
 }
