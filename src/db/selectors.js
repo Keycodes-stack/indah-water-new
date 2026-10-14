@@ -296,3 +296,4 @@ export function complianceSummary(compliance, targets) {
     withinTarget: (latest.complaintsPer1000 || 0) <= (targets?.complaintsPer1000 ?? 0.4),
   };
 }
+
