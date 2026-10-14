@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useData } from "../db/store.jsx";
+import { num } from "../lib/format.js";
 import { Panel, Badge, Meter } from "../components/ui.jsx";
 import { BarChartBox } from "../components/charts.jsx";
 import {
@@ -140,6 +142,7 @@ const RECOVERY_DATA = {
 
 export default function Overview() {
   const navigate = useNavigate();
+  const { customers } = useData();
   const [recoveryPeriod, setRecoveryPeriod] = useState("this_month");
   const currentRecovery = RECOVERY_DATA[recoveryPeriod];
 
@@ -297,7 +300,9 @@ export default function Overview() {
             </span>
             <UsersIcon size={20} className="text-muted" />
           </div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text)" }}>14,850</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text)" }}>
+            {customers ? num(customers.length) : "14,850"}
+          </div>
           <div style={{ fontSize: 11.5, color: "#10b981", fontWeight: 700, marginTop: 4 }}>
             ↑ +340 new accounts this month
           </div>
