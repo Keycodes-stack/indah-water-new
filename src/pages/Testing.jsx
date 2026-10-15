@@ -98,11 +98,11 @@ export default function Testing() {
     }
     if (!settings.testEmail) {
       distressSentRef.current = false;
-      setDistressAlert({ level: "warn", text: "Distress detected, but no test email is set. Open Workflows → Live Distress Call Email → Run Workflow and enter the test email once." });
+      setDistressAlert({ level: "warn", text: "Distress detected, but no test email is set. Open Workflows â†’ Live Distress Call Email â†’ Run Workflow and enter the test email once." });
       return;
     }
 
-    setDistressAlert({ level: "warn", text: `Distress detected ("${trigger}") — sending alert email to ${settings.testEmail}…` });
+    setDistressAlert({ level: "warn", text: `Distress detected ("${trigger}") â€” sending alert email to ${settings.testEmail}â€¦` });
     const wf = DEMO_WORKFLOWS.find((w) => w.liveTrigger);
     const failures = [];
     await runWorkflow(wf, {
@@ -321,7 +321,7 @@ export default function Testing() {
               </span>
             </div>
             <Link to="/outbound-caller" className="btn-ghost" style={{ fontSize: 12, padding: "6px 12px" }}>
-              ← Return To Queue
+              â† Return To Queue
             </Link>
           </div>
         </div>
@@ -333,9 +333,12 @@ export default function Testing() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
           gap: 24,
+          maxWidth: 480,
+          margin: "0 auto",
         }}
       >
-        {AGENTS.map((agent) => {
+        {/* English agent retained in AGENTS for backend/re-attach, hidden from frontend */}
+        {AGENTS.filter((agent) => agent.id !== "aina-en").map((agent) => {
           const isThisAgentActive = activeAgentId === agent.id;
           const isConnecting = isThisAgentActive && callStatus === "connecting";
           const isLive = isThisAgentActive && callStatus === "active";
@@ -558,7 +561,7 @@ export default function Testing() {
                     border: "1px solid currentColor",
                   }}
                 >
-                  🚨 {distressAlert.text}
+                  ðŸš¨ {distressAlert.text}
                 </div>
               )}
 
@@ -680,3 +683,4 @@ export default function Testing() {
     </div>
   );
 }
+
