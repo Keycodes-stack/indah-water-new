@@ -4,7 +4,7 @@ import { Badge, Modal } from "../components/ui.jsx";
 import { RefreshIcon } from "../components/icons.jsx";
 import config from "../../config.js";
 
-const WEBHOOK_URL = "https://praeco.app.n8n.cloud/webhook/fetch-logs";
+const WEBHOOK_URL = config.n8nWebhookUrl || "https://n8n.muteify.com/webhook/fetch-logs";
 
 const ALL_OUTCOMES = [
   "ALL",

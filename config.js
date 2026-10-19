@@ -42,9 +42,9 @@ export const CONFIG = {
   },
 
   // --- Call Alerts & Telemetry Webhooks (n8n) ---------------
-  n8nWebhookUrl: "https://praeco.app.n8n.cloud/webhook/fetch-logs",
+  n8nWebhookUrl: "https://n8n.muteify.com/webhook/fetch-logs",
   alerts: {
-    webhookUrl: "https://praeco.app.n8n.cloud/webhook/fetch-alerts",
+    webhookUrl: "https://n8n.muteify.com/webhook/fetch-alerts",
   },
 
   // --- Dashboard behaviour ----------------------------------
